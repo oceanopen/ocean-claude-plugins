@@ -28,7 +28,7 @@
 #### 1.2.1 通过 Marketplace 安装（推荐）
 
 ```bash
-/plugin marketplace add git@github.com:oceanopen/ocean-cluade-plugins.git
+/plugin marketplace add git@github.com:oceanopen/ocean-claude-plugins.git
 /plugin install ocean-code
 ```
 
@@ -38,7 +38,7 @@
 
 ```bash
 cd <your-project-dir>
-git clone git@github.com:oceanopen/ocean-cluade-plugins.git
+git clone git@github.com:oceanopen/ocean-claude-plugins.git
 ```
 
 2. 运行 claude 并安装插件
