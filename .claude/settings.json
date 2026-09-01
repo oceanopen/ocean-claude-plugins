@@ -1,5 +1,11 @@
 {
   "permissions": {
-    "allow": []
+    "allow": [
+      "Bash",
+      "WebSearch",
+      "Read",
+      "Write",
+      "WebFetch"
+    ]
   }
 }
