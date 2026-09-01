@@ -1,0 +1,5 @@
+{
+  "name": "ocean-harness",
+  "description": "issue 驱动的 agent 开发流程插件，提供需求润色（refine-issue）、任务执行（agent-dev）等 skill，并捆绑 we-terminal MCP server（issue/子任务/工作空间工具集）",
+  "version": "1.0.0"
+}
