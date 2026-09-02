@@ -1,12 +1,12 @@
 # ocean-harness-plugin
 
-issue 驱动的 agent 开发流程插件（we-claude-terminal-app 配套）。
+issue 驱动的 agent 开发流程插件（ocean-harness-app 配套）。
 
 ## 组成
 
-- **MCP server（`we-terminal`）**：根目录 `.mcp.json` 捆绑，指向 we-claude-terminal
-  Go 后端的 `/mcp/streamableHttp/weTerminal` 端点（Streamable HTTP）。端口经
-  `${WE_TERMINAL_PORT:-9100}` 环境变量展开——we-claude-terminal 的嵌入式终端 spawn
+- **MCP server（`ocean-harness`）**：根目录 `.mcp.json` 捆绑，指向 ocean-harness
+  Go 后端的 `/mcp/streamableHttp/oceanHarness` 端点（Streamable HTTP）。端口经
+  `${OCEAN_HARNESS_PORT:-9100}` 环境变量展开——ocean-harness 的嵌入式终端 spawn
   PTY 时自动注入实际端口，外部终端回落默认 9100。工具集：`issue_get_info` /
   `issue_update` / `issue_child_list` / `issue_child_create` / `issue_child_update` /
   `issue_workspace_status`。

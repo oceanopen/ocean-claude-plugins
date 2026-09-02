@@ -1,5 +1,5 @@
 ---
-allowed-tools: Agent, AskUserQuestion, Read, Glob, Grep, Skill, Bash, Write, Edit, TaskCreate, TaskUpdate, mcp__plugin_ocean-harness_we-terminal
+allowed-tools: Agent, AskUserQuestion, Read, Glob, Grep, Skill, Bash, Write, Edit, TaskCreate, TaskUpdate, mcp__plugin_ocean-harness_ocean-harness
 argument-hint: 可选的补充说明
 description: AI 需求润色与子任务拆分，基于源码上下文澄清需求
 skills: issue-context
@@ -9,7 +9,7 @@ skills: issue-context
 
 # /ocean-harness:refine-issue
 
-AI 需求润色与子任务拆分。在 issue 运行工作空间的终端中执行：读取仓库源码理解代码库结构，分析需求并澄清歧义，润色为结构化需求描述，按需拆分子任务，首次生成 AGENT.md / CLAUDE.md，并通过 we-terminal MCP 回写结果。
+AI 需求润色与子任务拆分。在 issue 运行工作空间的终端中执行：读取仓库源码理解代码库结构，分析需求并澄清歧义，润色为结构化需求描述，按需拆分子任务，首次生成 AGENT.md / CLAUDE.md，并通过 ocean-harness MCP 回写结果。
 
 ## 使用方法
 
@@ -34,7 +34,7 @@ AI 需求润色与子任务拆分。在 issue 运行工作空间的终端中执�
 - **回写前必须获得「确认回写」点选**：循环呈现与调整，用户点选「确认回写」后才执行任何 DB/文件写入
 - **使用 TaskCreate 跟踪进度**：全程跟踪各阶段进展
 
-## MCP 工具（we-terminal server）
+## MCP 工具（ocean-harness server）
 
 | 工具 | 用途 |
 |------|------|
@@ -90,6 +90,6 @@ AI 需求润色与子任务拆分。在 issue 运行工作空间的终端中执�
 | cwd basename 非 uuid 格式 | 终止：提示本命令须在 issue 工作空间终端（cwd 为 `{baseDir}/{issueId}`）中执行 |
 | `issue_get_info` 返回 "issue 不存在" | 终止：提示工作空间目录与 issue 不匹配 |
 | `issue_workspace_status` 非 SUCCESS | 终止：展示 serverStatus 与失败原因，提示先在工作台完成工作空间初始化 |
-| MCP 工具调用连接失败 | 终止：提示检查 we-claude-terminal 应用是否运行、ocean-harness 插件是否安装（WE_TERMINAL_PORT 环境变量） |
+| MCP 工具调用连接失败 | 终止：提示检查 ocean-harness 应用是否运行、ocean-harness 插件是否安装（OCEAN_HARNESS_PORT 环境变量） |
 | repo/ 下无仓库目录 | `AskUserQuestion`（继续/终止）：无源码上下文时仅基于描述润色，质量受限 |
 | 子任务创建中途失败 | 停止后续创建，报告已成功与失败清单；提示可直接重跑（重跑时按 `issue_child_list` 与 DB 对齐，已建子任务并入 [保留] 不会重复创建） |

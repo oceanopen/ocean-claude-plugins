@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "we-terminal": {
+    "ocean-harness": {
       "type": "http",
-      "url": "http://127.0.0.1:${WE_TERMINAL_PORT:-9100}/mcp/streamableHttp/weTerminal"
+      "url": "http://127.0.0.1:${OCEAN_HARNESS_PORT:-9100}/mcp/streamableHttp/oceanHarness"
     }
   }
 }

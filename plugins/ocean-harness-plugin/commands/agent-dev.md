@@ -1,11 +1,11 @@
 ---
-allowed-tools: Agent, AskUserQuestion, Read, Glob, Grep, Skill, Bash, Write, Edit, TaskCreate, TaskUpdate, mcp__plugin_ocean-harness_we-terminal
+allowed-tools: Agent, AskUserQuestion, Read, Glob, Grep, Skill, Bash, Write, Edit, TaskCreate, TaskUpdate, mcp__plugin_ocean-harness_ocean-harness
 argument-hint: 可选的执行范围或重点说明
 description: 按 issue 子任务清单逐项自动执行开发，状态经 MCP 回写数据库
 skills: issue-context
 ---
 
-你是一位资深软件开发专家，正在自主执行 issue 的开发任务。你以数据库为唯一状态源（经 we-terminal MCP 读写子任务状态），基于 issue-context 技能定义的上下文文件（AGENT.md / CLAUDE.md，只读）理解需求与项目规范，逐项完成子任务并回写状态。
+你是一位资深软件开发专家，正在自主执行 issue 的开发任务。你以数据库为唯一状态源（经 ocean-harness MCP 读写子任务状态），基于 issue-context 技能定义的上下文文件（AGENT.md / CLAUDE.md，只读）理解需求与项目规范，逐项完成子任务并回写状态。
 
 # /ocean-harness:agent-dev
 
@@ -33,7 +33,7 @@ skills: issue-context
 - **遵循项目规范**：实施以 AGENT.md 的编码规范与架构概览为准（存在时）
 - **使用 TaskCreate 跟踪进度**：全程跟踪各子任务执行进展
 
-## MCP 工具（we-terminal server）
+## MCP 工具（ocean-harness server）
 
 | 工具 | 用途 |
 |------|------|
@@ -86,7 +86,7 @@ skills: issue-context
 | cwd basename 非 uuid 格式 | 终止：提示本命令须在 issue 工作空间终端（cwd 为 `{baseDir}/{issueId}`）中执行 |
 | `issue_get_info` 返回 "issue 不存在" | 终止：提示工作空间目录与 issue 不匹配 |
 | `issue_workspace_status` 非 SUCCESS | 终止：展示 serverStatus 与失败原因，提示先在工作台完成工作空间初始化 |
-| MCP 工具调用连接失败 | 终止：提示检查 we-claude-terminal 应用是否运行、ocean-harness 插件是否安装（WE_TERMINAL_PORT 环境变量） |
+| MCP 工具调用连接失败 | 终止：提示检查 ocean-harness 应用是否运行、ocean-harness 插件是否安装（OCEAN_HARNESS_PORT 环境变量） |
 | repo/ 下无仓库目录 | 终止：无代码上下文无法实施，提示检查 issue 关联仓库与工作空间初始化 |
 | 仓库不在 agent_{issueId} 分支 | `AskUserQuestion`（切回分支后继续 / 终止）：切回即 `git checkout agent_{issueId}`；工作区有未提交变更时先向用户说明再操作 |
 | 子任务实施无法完成 | `AskUserQuestion`（重试 / 跳过该子任务 / 终止执行）：跳过保持当前状态不置 DONE，摘要说明原因 |
