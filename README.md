@@ -60,7 +60,9 @@ claude
 
 | 插件 | 说明 | 状态 |
 | --- | --- | --- |
-| _暂无_ | _敬请期待_ | — |
+| [ocean-code](plugins/ocean-code-plugin/) | 研发辅助插件，提供代码审查、规范检查、文档生成等编程技能，提升日常开发效率 | 可用 |
+| [ocean-harness](plugins/ocean-harness-plugin/) | issue 驱动的 agent 开发流程插件，提供需求润色（refine-issue）、自动开发（agent-dev）等流程 skill，并捆绑 we-terminal MCP server | 可用 |
+| [ocean-office](plugins/ocean-office-plugin/) | 办公效率插件，提供 HTML 演示文稿制作等办公技能 | 可用 |
 
 > 插件位于 `plugins/` 目录下，每个子目录为一个独立插件。
 

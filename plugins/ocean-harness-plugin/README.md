@@ -12,11 +12,16 @@ issue 驱动的 agent 开发流程插件（we-claude-terminal-app 配套）。
   `issue_workspace_status`。
 - **commands/**：流程 skill：
   - `refine-issue`：AI 需求润色与子任务拆分（T2.2 已落地）——在 issue 工作空间终端
-    执行，基于源码上下文澄清需求，生成 AGENT.md/CLAUDE.md，子任务与润色稿经 MCP 回写
-  - `agent-dev`：按 issueId 逐项执行子任务（T2.4，规划中）
+    执行，基于源码上下文澄清需求，生成 AGENT.md/CLAUDE.md（需求上下文快照），子任务与
+    润色稿经 MCP 回写
+  - `agent-dev`：按子任务清单逐项自动执行开发（T2.4 已落地）——子任务清单与状态以
+    数据库为唯一真相源（MCP issue_child_list），逐项「探索→实施→自检→状态回写」；
+    有子任务时不流转父状态（父→子级联会打回 DONE/复活 CANCELLED，父由后端全完成联动），
+    无子任务时整体执行
 - **skills/**：可复用契约文档：
-  - `issue-context`：AGENT.md/CLAUDE.md 结构契约、子任务拆分规范与进度段更新规范，
-    供 refine-issue（首次生成）与 agent-dev（持续更新）共同引用，保证格式不漂移
+  - `issue-context`：AGENT.md/CLAUDE.md 结构契约与子任务拆分规范——CLAUDE.md 为纯需求
+    上下文快照（原始需求存档 / 润色快照 / 注意事项），不记录子任务状态（状态唯一真相源
+    为数据库）；refine-issue 遵守生成、agent-dev 只读消费
 
 ## 更新生效
 

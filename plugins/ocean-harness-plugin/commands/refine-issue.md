@@ -54,7 +54,7 @@ AI 需求润色与子任务拆分。在 issue 运行工作空间的终端中执�
 1. **推导 issueId**：取当前工作目录 basename 作为 issueId（uuid 格式）。非 uuid 格式 → 按错误处理表终止
 2. **获取 issue**：`issue_get_info` → 标题（name）、原始描述（description）、当前状态（stateCode）、关联仓库列表
 3. **校验工作空间**：`issue_workspace_status` → serverStatus 必须 `SUCCESS`，否则按错误处理表终止；记录 steps[cloneRepos].repos[].name 与 baseBranch，作为 repo/ 目录映射
-4. **存量对齐**：调 `issue_child_list` 获取 DB 中已有子任务（含 DB ID 与状态），并读 cwd 下 CLAUDE.md——两者任一非空即进入**增量模式**（解析 CLAUDE.md 子任务表并与 DB 对齐，存量子任务并入差异比对），均为空才是**首次模式**（直接进入源码探索）。注意：仅凭 CLAUDE.md 是否存在判定会漏掉「上次建子任务中途失败、CLAUDE.md 尚未写出」与「用户在 tracker UI 手工预建子任务」两类场景，导致重复创建
+4. **存量对齐**：调 `issue_child_list` 获取 DB 中已有子任务（含 DB ID 与状态）——非空，或 cwd 下 CLAUDE.md 已存在，即进入**增量模式**（存量子任务并入差异比对）；均为空才是**首次模式**（直接进入源码探索）。判定以 DB 为准，CLAUDE.md 是否存在只决定需求段落是增量修订还是全新 Write，不参与子任务判定——避免「上次建子任务中途失败、CLAUDE.md 尚未写出」与「用户在 tracker UI 手工预建子任务」两类场景漏判
 5. **源码探索**：并行启动 2-3 个 Agent 探索 repo/ 下各仓库（架构层次、与需求相关的现有实现、编码惯例），要求返回关键文件列表；Agent 完成后精读关键文件构建深入理解。用户提供了 `$ARGUMENTS` 补充说明时，将其作为润色重点融入分析
 
 ### 阶段 2：分析与澄清（确认点 1）
@@ -68,20 +68,20 @@ AI 需求润色与子任务拆分。在 issue 运行工作空间的终端中执�
 1. 正文完整呈现三部分：
    - **润色后需求稿**：按「背景 / 目标 / 需求明细 / 边界与非目标 / 验收标准」结构化组织
    - **子任务清单**：每项含标题与完成标准；增量模式下标注差异——`[新增]` / `[保留]` / `[建议作废]`（与现有子任务冲突或已被覆盖的）
-   - **AGENT.md / CLAUDE.md 生成要点**：静态上下文与动态上下文各自将写入的核心内容概要
+   - **AGENT.md / CLAUDE.md 生成要点**：静态上下文与需求上下文快照各自将写入的核心内容概要（CLAUDE.md 不含子任务清单与状态）
 2. `AskUserQuestion` 循环确认（选项：「确认回写 (推荐)」/「需要调整」；支持 Other 输入调整意见）：选「需要调整」→ 吸收意见更新成稿 → 再次呈现并询问，**直至点选「确认回写」**
 
 ### 阶段 4：回写落盘（确认后自动执行，不再确认）
 
-按以下顺序执行（先建子任务拿到 DB ID，再写 CLAUDE.md，最后父 issue 状态流转）：
+按以下顺序执行（先写 AGENT.md，再建/作废子任务，然后写 CLAUDE.md，最后父 issue 状态流转）：
 
 1. **AGENT.md**：不存在 → 按 issue-context 模板 Write；已存在 → 仅增量补充/修订对应小节（Edit，不整体重写）
 2. **子任务回写**：
    - `[新增]` 项逐个 `issue_child_create`（name=标题，description=完成标准；父 issue 当前状态非 BACKLOG 时传 stateCode=TODO，与存量兄弟状态保持一致），**记录每个返回的 id**
    - `[建议作废]` 项（经用户确认）逐个 `issue_child_update`（stateCode=CANCELLED）
-3. **CLAUDE.md**：按 issue-context 模板 Write——原始描述存档 + 润色后需求 + 子任务列表（**DB ID 列填入步骤 2 返回的真实 uuid**）+ 进度（未开始）+ 注意事项；增量模式下保留已有子任务的当前状态，不得把 DONE/IN_PROGRESS 重置
+3. **CLAUDE.md**：按 issue-context 模板 Write——原始描述存档 + 润色后需求快照 + 注意事项；**不写入子任务清单与状态**（子任务以 DB 为唯一真相源，agent-dev 经 MCP 读取）。增量模式下按 issue-context「增量重跑规则」修订，「原始需求（存档）」段原样保留
 4. **issue 状态流转**：`issue_update` 回写 description（润色稿 Markdown）；**仅当「父 issue 当前 stateCode 为 BACKLOG」且「不存在 IN_PROGRESS/DONE 状态的子任务」时**同时传 stateCode=TODO（级联语义见 issue-context 技能）。任一条件不满足则不传 stateCode（留空=不改）、仅回写描述，并在摘要中说明未流转的原因——父状态级联会无差别同步全部子任务，可能把进行中/已完成的进度打回
-5. **输出回写摘要**（正文）：创建/作废的子任务清单（含 DB ID）、AGENT.md/CLAUDE.md 路径、issue 描述与状态变化，并提示后续可用 `/ocean-harness:agent-dev` 逐项执行子任务（该命令随 T2.4 落地）
+5. **输出回写摘要**（正文）：创建/作废的子任务清单（含 DB ID）、AGENT.md/CLAUDE.md 路径、issue 描述与状态变化，并提示后续可用 `/ocean-harness:agent-dev` 逐项执行子任务
 
 ## 错误处理
 
@@ -93,4 +93,3 @@ AI 需求润色与子任务拆分。在 issue 运行工作空间的终端中执�
 | MCP 工具调用连接失败 | 终止：提示检查 we-claude-terminal 应用是否运行、ocean-harness 插件是否安装（WE_TERMINAL_PORT 环境变量） |
 | repo/ 下无仓库目录 | `AskUserQuestion`（继续/终止）：无源码上下文时仅基于描述润色，质量受限 |
 | 子任务创建中途失败 | 停止后续创建，报告已成功与失败清单；提示可直接重跑（重跑时按 `issue_child_list` 与 DB 对齐，已建子任务并入 [保留] 不会重复创建） |
-| CLAUDE.md 存在但解析不出子任务表 | 按 DB `issue_child_list` 为准重建该段，其余段落保留 |

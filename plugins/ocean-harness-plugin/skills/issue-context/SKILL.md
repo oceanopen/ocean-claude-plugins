@@ -1,11 +1,13 @@
 ---
 name: issue-context
-description: 定义 issue 工作空间上下文文件（AGENT.md/CLAUDE.md）的结构契约、子任务拆分规范与更新规则，供 refine-issue（首次生成与增量重跑）与 agent-dev（执行期更新）共同引用
+description: 定义 issue 工作空间上下文文件（AGENT.md/CLAUDE.md）的结构契约与子任务拆分规范，供 refine-issue（首次生成与增量重跑）遵守、agent-dev（只读消费）引用；子任务状态一律以数据库为唯一真相源
 ---
 
 # Issue 工作空间上下文契约
 
-定义 issue 运行工作空间中两个 AI 上下文文件的结构与更新规则。生成方（`/ocean-harness:refine-issue`）与更新方（`/ocean-harness:agent-dev`）必须遵守同一契约，保证格式不漂移。**两方的更新范围不同**：agent-dev 只动状态与进度（见「进度段更新规范」），refine-issue 增量重跑可修订需求段落（见「增量重跑规则」）。
+定义 issue 运行工作空间中两个 AI 上下文文件的结构与更新规则。生成方（`/ocean-harness:refine-issue`）必须遵守本契约；消费方（`/ocean-harness:agent-dev`）只读引用，执行期不修改两文件。
+
+**状态与上下文分离**：子任务清单、状态、进度以数据库为唯一真相源（MCP `issue_child_list` / tracker 看板），上下文文件不记录任何状态——同一数据只留一份，杜绝双写漂移。CLAUDE.md 只是需求上下文的本地快照。
 
 ## 文件位置
 
@@ -14,19 +16,19 @@ description: 定义 issue 工作空间上下文文件（AGENT.md/CLAUDE.md）的
 ```
 {baseDir}/{issueId}/
 ├── AGENT.md      # 静态上下文：项目信息、编码规范、架构概览（首次生成，仅增量补充）
-├── CLAUDE.md     # 动态上下文：润色后需求、子任务列表、当前进度（首次生成，持续更新）
+├── CLAUDE.md     # 需求上下文快照：原始需求存档、润色后需求、注意事项（首次生成，增量重跑可修订）
 └── repo/{name}/  # 关联仓库（agent_{issueId} 分支）
 ```
 
-## CLAUDE.md 模板（动态上下文）
+## CLAUDE.md 模板（需求上下文快照）
 
-首次生成时严格按以下结构写入（状态以 DB 为唯一真相，本文件不记录 issue 状态字段）；后续更新范围按执行方区分，见下方「进度段更新规范」与「增量重跑规则」：
+首次生成时严格按以下结构写入；增量重跑按下方「增量重跑规则」修订：
 
 ```markdown
 # {issue name}
 
-> 本文件由 /ocean-harness:refine-issue 首次生成，由 /ocean-harness:agent-dev 持续更新。
-> 手工修改可能被下次 AI 更新覆盖，重要决策请写入 issue 描述或子任务描述。
+> 本文件由 /ocean-harness:refine-issue 生成，是需求上下文的本地快照。
+> 子任务清单与进度以数据库为准（tracker 看板 / MCP issue_child_list），本文件不记录状态。
 
 ## 任务信息
 
@@ -35,9 +37,11 @@ description: 定义 issue 工作空间上下文文件（AGENT.md/CLAUDE.md）的
 
 ## 原始需求（存档）
 
-{用户原始描述原文，一字不改，仅供追溯}
+{用户原始描述原文，一字不改，仅供追溯——refine-issue 会用润色稿覆盖 issue 描述，原文唯一留档于此}
 
-## 润色后需求
+## 润色后需求（快照）
+
+> 与 issue 描述同步生成；issue 描述为权威版本，后续在 tracker 中的修改不回填本文件。
 
 ### 背景
 
@@ -59,20 +63,6 @@ description: 定义 issue 工作空间上下文文件（AGENT.md/CLAUDE.md）的
 
 {可验证的完成判据清单}
 
-## 子任务列表
-
-| # | 子任务 | DB ID | 状态 | 完成标准 |
-|---|--------|-------|------|----------|
-| 1 | {标题} | {uuid} | BACKLOG | {可验证的完成判据} |
-
-（无子任务时本段写「本 issue 不拆分子任务，整体执行」。）
-
-## 当前进度
-
-- 进行中: 无（未开始）
-- 已完成: 无
-- 下一步: 子任务 1
-
 ## 注意事项 / 约束
 
 - {澄清过程中确认的约束、技术决策、风险点}
@@ -80,33 +70,16 @@ description: 定义 issue 工作空间上下文文件（AGENT.md/CLAUDE.md）的
 
 **模板硬性约束**：
 
-- 「子任务列表」的 **DB ID 列必须记录** `issue_child_create` 返回的真实 uuid——agent-dev 更新状态时凭此调用 `issue_child_update`，不靠标题反查
-- 状态列取值只能用 StateCode 枚举：`BACKLOG` / `TODO` / `IN_PROGRESS` / `DONE` / `CANCELLED`
+- **不写入子任务清单、状态、进度等任何随执行变化的数据**——agent-dev 从 DB（MCP `issue_child_list`）获取清单与状态，凭 MCP 返回的子任务 id 回写，不经本文件
 - 「原始需求（存档）」段一经写入永不修改
-
-## 进度段更新规范（agent-dev 执行）
-
-每完成一个子任务，按固定顺序执行两步：
-
-1. **先更新 DB**：`issue_child_update`（issueId=该子任务 DB ID，stateCode=`DONE`；开始执行前置 `IN_PROGRESS`）
-2. **再更新本文件**（Edit，两处）：
-   - 「子任务列表」中该行状态列改为新状态
-   - 「当前进度」段整体重写为最新事实：
-     ```markdown
-     - 进行中: {无 或 子任务 N}
-     - 已完成: 子任务 1、子任务 2
-     - 下一步: {子任务 N+1 或 全部完成}
-     ```
-
-除上述两处外不得改动其他任何段落。
 
 ## 增量重跑规则（refine-issue 执行）
 
-refine-issue 增量模式重写 CLAUDE.md 时：
+refine-issue 增量模式修订 CLAUDE.md 时：
 
 - **「原始需求（存档）」段永不修改**
-- 已有子任务在「子任务列表」中**保留 DB 中的当前状态**，不得把 DONE/IN_PROGRESS 重置；作废项置 CANCELLED 须先经用户确认
-- 可修订：润色后需求各小节、子任务的增删、「当前进度」段、「注意事项 / 约束」段、「任务信息」的标题与关联仓库（如有关联变更）
+- 可修订：润色后需求各小节、「注意事项 / 约束」段、「任务信息」的标题与关联仓库（如有关联变更）
+- 子任务的增删不经本文件：新增走 `issue_child_create`，作废走 `issue_child_update` 置 CANCELLED（须先经用户确认）；已有子任务的 DB 状态一律不动
 
 ## AGENT.md 模板（静态上下文）
 
@@ -142,8 +115,8 @@ refine-issue 增量模式重写 CLAUDE.md 时：
 
 ## 子任务拆分规范（refine-issue 执行）
 
-- **可验证**：每个子任务必须有明确完成标准（写进「完成标准」列），杜绝「优化一下」「完善功能」类表述
+- **可验证**：每个子任务必须有明确完成标准（写入子任务的 description），杜绝「优化一下」「完善功能」类表述
 - **粒度适中**：一个子任务 = 一次可独立验证的交付；避免过细（纯机械步骤）与过粗（跨多模块大改）
 - **按执行顺序排列**：有依赖关系的任务，被依赖者排前
 - **数量建议 3~8 项**：小需求不硬拆（无子任务时 agent-dev 整体执行 issue）
-- **状态默认 `BACKLOG`**：创建后由 refine-issue 统一将父 issue 置 `TODO`（父状态变化会级联子任务到 TODO，语义一致：需求就绪、全部待开发）
+- **状态默认 `BACKLOG`**：创建后由 refine-issue 按双条件流转父 issue 为 `TODO`（父当前为 BACKLOG 且不存在 IN_PROGRESS/DONE 子任务；不满足则不流转并在摘要说明原因——父状态变化会无差别级联子任务，可能打回已有进度）
