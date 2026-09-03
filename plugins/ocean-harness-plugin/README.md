@@ -7,9 +7,15 @@ issue 驱动的 agent 开发流程插件（ocean-harness-app 配套）。
 - **MCP server（`ocean-harness`）**：根目录 `.mcp.json` 捆绑，指向 ocean-harness
   Go 后端的 `/mcp/streamableHttp/oceanHarness` 端点（Streamable HTTP）。端口经
   `${OCEAN_HARNESS_PORT:-9100}` 环境变量展开——ocean-harness 的嵌入式终端 spawn
-  PTY 时自动注入实际端口，外部终端回落默认 9100。工具集：`issue_get_info` /
-  `issue_update` / `issue_child_list` / `issue_child_create` / `issue_child_update` /
-  `issue_workspace_status`。
+  PTY 时自动注入实际端口，外部终端回落默认 9100。单 server 归口（工具名前缀分组）：
+  - `issue_*`（T2.1）：`issue_get_info` / `issue_update` / `issue_child_list` /
+    `issue_child_create` / `issue_child_update` / `issue_workspace_status`
+  - `github_*`（T4.1）：`github_create_pr`（head 留空默认 `agent_{issueId}`、base
+    留空默认 issue 关联基准分支）/ `github_list_prs`（列出仓库 PR，≤50 条）/
+    `github_ci_status`（CI 检查状态：GitHub Actions 与旧 commit status 归并）。
+    仓库按 localRepositoryId 定位（`issue_get_info` 返回的 repositoryBranchList）；
+    仅支持 github.com 仓库（gitee/gitlab 待后续）；需先在 ocean-harness
+    设置 → 个人中心 → GitHub 录入 Personal Access Token
 - **commands/**：流程 skill：
   - `refine-issue`：AI 需求润色与子任务拆分（T2.2 已落地）——在 issue 工作空间终端
     执行，基于源码上下文澄清需求，生成 AGENT.md/CLAUDE.md（需求上下文快照），子任务与
