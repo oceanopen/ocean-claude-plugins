@@ -7,7 +7,7 @@ description: 定义 issue 工作空间上下文文件（AGENT.md/CLAUDE.md）的
 
 定义 issue 运行工作空间中两个 AI 上下文文件的结构与更新规则。生成方（`/ocean-harness:refine-issue`）必须遵守本契约；消费方（`/ocean-harness:agent-dev`）只读引用，执行期不修改两文件。
 
-**状态与上下文分离**：子任务清单、状态、进度以数据库为唯一真相源（MCP `issue_child_list` / tracker 看板），上下文文件不记录任何状态——同一数据只留一份，杜绝双写漂移。CLAUDE.md 只是需求上下文的本地快照。
+**状态与上下文分离**：子任务清单、状态、进度以数据库为唯一真相源（`ocean-harness mcp call issue_child_list` / tracker 看板），上下文文件不记录任何状态——同一数据只留一份，杜绝双写漂移。CLAUDE.md 只是需求上下文的本地快照。
 
 ## 文件位置
 
@@ -28,7 +28,7 @@ description: 定义 issue 工作空间上下文文件（AGENT.md/CLAUDE.md）的
 # {issue name}
 
 > 本文件由 /ocean-harness:refine-issue 生成，是需求上下文的本地快照。
-> 子任务清单与进度以数据库为准（tracker 看板 / MCP issue_child_list），本文件不记录状态。
+> 子任务清单与进度以数据库为准（tracker 看板 / ocean-harness mcp call issue_child_list），本文件不记录状态。
 
 ## 任务信息
 
@@ -70,7 +70,7 @@ description: 定义 issue 工作空间上下文文件（AGENT.md/CLAUDE.md）的
 
 **模板硬性约束**：
 
-- **不写入子任务清单、状态、进度等任何随执行变化的数据**——agent-dev 从 DB（MCP `issue_child_list`）获取清单与状态，凭 MCP 返回的子任务 id 回写，不经本文件
+- **不写入子任务清单、状态、进度等任何随执行变化的数据**——agent-dev 从 DB（`ocean-harness mcp call issue_child_list`）获取清单与状态，凭返回的子任务 id 经 CLI 回写，不经本文件
 - 「原始需求（存档）」段一经写入永不修改
 
 ## 增量重跑规则（refine-issue 执行）

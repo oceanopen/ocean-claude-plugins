@@ -21,7 +21,7 @@
     {
       "name": "ocean-harness",
       "source": "./plugins/ocean-harness-plugin",
-      "description": "issue 驱动的 agent 开发流程插件，提供需求润色、任务执行等 skill，并捆绑 ocean-harness MCP server"
+      "description": "issue 驱动的 agent 开发流程插件，提供需求润色、任务执行等 skill，经 ocean-harness CLI 读写 issue/子任务/工作空间"
     }
   ]
 }
