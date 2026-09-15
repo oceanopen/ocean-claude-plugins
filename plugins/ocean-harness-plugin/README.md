@@ -5,11 +5,12 @@ issue 驱动的 agent 开发流程插件（Ocean Harness 桌面应用配套）�
 ## 前置要求
 
 - **Ocean Harness 桌面应用**：插件不再捆绑 MCP server，工具调用统一经 app 自动注册的
-  `ocean-harness` CLI 命令（安装 app 时 symlink 到 `/usr/local/bin`；debug 构建的 app
-  注册 `ocean-harness-dev`，连本地调试服务）。常用形式：
-  - `ocean-harness mcp tools`：列出全部工具
-  - `ocean-harness mcp schema <tool>`：查看工具完整 schema
-  - `ocean-harness mcp call <tool> --data '<json>'`：调用工具（stdout 纯 JSON 结果）
+  `ocean-harness-cli` 命令（安装 app 时 symlink 到 `/usr/local/bin`；debug 构建的 app
+  注册 `ocean-harness-dev-cli`，连本地调试服务）。常用形式：
+  - `ocean-harness-cli mcp tools`：列出全部工具
+  - `ocean-harness-cli mcp schema <tool>`：查看工具完整 schema
+  - `ocean-harness-cli mcp call <tool> --data '<json>'`：调用工具（stdout 纯 JSON 结果；
+    `--data` 亦支持 `@file` 读文件、`-` 读 stdin）
   退出码 `0` 成功 / `1` 工具业务错误 / `2` 用法或连接错误。执行 skill 前请确保
   Ocean Harness app 已启动。
 - **GitHub 工具集（`github_*`）**：`github_create_pr`（head 留空默认 `agent_{issueId}`、

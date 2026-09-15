@@ -34,14 +34,15 @@ AI 需求润色与子任务拆分。在 issue 运行工作空间的终端中执�
 - **回写前必须获得「确认回写」点选**：循环呈现与调整，用户点选「确认回写」后才执行任何 DB/文件写入
 - **使用 TaskCreate 跟踪进度**：全程跟踪各阶段进展
 
-## CLI 工具调用（ocean-harness 命令）
+## CLI 工具调用（ocean-harness-cli 命令）
 
-所有 tracker 工具经 `ocean-harness` CLI 调用（Ocean Harness app 安装时自动注册该命令；stdout 输出纯 JSON 结果，stderr 输出中文错误文案）：
+所有 tracker 工具经 `ocean-harness-cli` 命令调用（Ocean Harness app 安装时自动注册；stdout 输出纯 JSON 结果，stderr 输出中文错误文案）：
 
 ```bash
-ocean-harness mcp tools                        # 列出全部工具与 schema 摘要
-ocean-harness mcp schema issue_update          # 查看单个工具完整 inputSchema/outputSchema（不确定入参时先查）
-ocean-harness mcp call <tool> --data '<json>'  # 调用工具；--data 省略视为 {}
+ocean-harness-cli mcp tools                        # 列出全部工具与 schema 摘要
+ocean-harness-cli mcp schema issue_update          # 查看单个工具完整 inputSchema/outputSchema（不确定入参时先查）
+ocean-harness-cli mcp call <tool> --data '<json>'  # 调用工具；--data 省略视为 {}
+ocean-harness-cli mcp call <tool> --data @payload.json  # 复杂/多行入参走文件，避免引号转义；--data - 则读 stdin
 ```
 
 退出码：`0` 成功（stdout 即结果 JSON，直接解析使用）；`1` 工具业务错误（stderr 为中文原因，须中止当前流程并向用户展示）；`2` 用法错误或本地服务不可达（stderr 含启动引导，提示用户先启动 Ocean Harness app）。
@@ -59,11 +60,11 @@ ocean-harness mcp call <tool> --data '<json>'  # 调用工具；--data 省略视
 
 ```bash
 # 获取 issue 详情
-ocean-harness mcp call issue_get_info --data '{"issueId":"<uuid>"}'
+ocean-harness-cli mcp call issue_get_info --data '{"issueId":"<uuid>"}'
 # 列出子任务（返回 children 数组，各项含 id 与 stateCode）
-ocean-harness mcp call issue_child_list --data '{"issueId":"<uuid>"}'
+ocean-harness-cli mcp call issue_child_list --data '{"issueId":"<uuid>"}'
 # 创建子任务（返回新建对象，其 id 字段即写进 CLAUDE.md 子任务表的 DB ID）
-ocean-harness mcp call issue_child_create --data '{"issueId":"<uuid>","name":"子任务标题","description":"完成标准"}'
+ocean-harness-cli mcp call issue_child_create --data '{"issueId":"<uuid>","name":"子任务标题","description":"完成标准"}'
 ```
 
 所有更新均为「空 = 不改」的部分更新语义（schema 中可选字段留空即不改，不支持置空）。
@@ -111,6 +112,6 @@ ocean-harness mcp call issue_child_create --data '{"issueId":"<uuid>","name":"�
 | cwd basename 非 uuid 格式 | 终止：提示本命令须在 issue 工作空间终端（cwd 为 `{baseDir}/{issueId}`）中执行 |
 | `issue_get_info` 返回 "issue 不存在" | 终止：提示工作空间目录与 issue 不匹配 |
 | `issue_workspace_status` 非 SUCCESS | 终止：展示 serverStatus 与失败原因，提示先在工作台完成工作空间初始化 |
-| CLI 命令退出码 2（连接失败/不可达） | 终止：提示先启动 Ocean Harness 桌面应用；确认 `ocean-harness` 命令已注册（可执行 `ocean-harness version` 自检） |
+| CLI 命令退出码 2（连接失败/不可达） | 终止：提示先启动 Ocean Harness 桌面应用；确认 `ocean-harness-cli` 命令已注册（可执行 `ocean-harness-cli version` 自检） |
 | repo/ 下无仓库目录 | `AskUserQuestion`（继续/终止）：无源码上下文时仅基于描述润色，质量受限 |
 | 子任务创建中途失败 | 停止后续创建，报告已成功与失败清单；提示可直接重跑（重跑时按 `issue_child_list` 与 DB 对齐，已建子任务并入 [保留] 不会重复创建） |
