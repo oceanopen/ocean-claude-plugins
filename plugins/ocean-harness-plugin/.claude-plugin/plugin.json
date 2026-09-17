@@ -1,5 +1,0 @@
-{
-  "name": "ocean-harness",
-  "description": "issue 驱动的 agent 开发流程插件，提供需求润色（refine-issue）、自动开发（agent-dev）等流程 skill，经 ocean-harness CLI 读写 issue/子任务/工作空间与 GitHub 工具集（PR 创建/列表、CI 状态）",
-  "version": "1.5.0"
-}
