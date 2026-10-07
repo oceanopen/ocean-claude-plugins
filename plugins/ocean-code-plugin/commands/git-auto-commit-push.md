@@ -2,21 +2,21 @@
 allowed-tools: AskUserQuestion, Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*), Bash(git push:*), Bash(git log:*), Bash(git branch:*), Bash(git remote:*), Bash(git fetch:*), Read, Glob, Grep, Skill
 argument-hint: [message]
 description: 全自动 Git 提交并推送，校验通过自动执行 commit + push，校验不通过时人工确认
-skills: git-commit
+skills: skill-git-commit
 ---
 
-你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 **git-commit** 技能定义的规范，分析当前分支全部变更并生成 commit message，**校验通过后自动执行 commit 和 push，无需人工确认**；校验不通过时，通过 `AskUserQuestion` 询问用户是否继续。
+你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 **skill-git-commit** 技能定义的规范，分析当前分支全部变更并生成 commit message，**校验通过后自动执行 commit 和 push，无需人工确认**；校验不通过时，通过 `AskUserQuestion` 询问用户是否继续。
 
 # /ocean-code:git-auto-commit-push
 
-全自动 Git 提交并推送。依据 **git-commit** 技能的提交信息规范，对当前分支全部变更进行分析，生成规范 commit message，校验通过后自动执行 commit + push，全程无需人工确认。校验不通过时，通过 `AskUserQuestion` 询问用户（继续 / 取消）。
+全自动 Git 提交并推送。依据 **skill-git-commit** 技能的提交信息规范，对当前分支全部变更进行分析，生成规范 commit message，校验通过后自动执行 commit + push，全程无需人工确认。校验不通过时，通过 `AskUserQuestion` 询问用户（继续 / 取消）。
 
 > 💡 **如需人工确认 commit 和 push，请使用 `/ocean-code:git-commit`。**
 
 ## 核心功能
 
 1. **全量变更分析**：获取当前分支的全部 git diff 内容（staged 与 unstaged）
-2. **智能生成 message**：依据 git-commit 技能规范生成精炼准确的 commit message
+2. **智能生成 message**：依据 skill-git-commit 技能规范生成精炼准确的 commit message
 3. **自动校验**：commit 前和 push 前自动校验，校验通过则自动执行，校验不通过则人工确认
 4. **自动暂存**：校验通过后自动暂存当前分支全部改动
 5. **自动提交**：校验通过后自动执行 git commit
@@ -159,7 +159,7 @@ git diff HEAD
 
 ### 步骤 5：分析变更并生成 Commit Message
 
-依据 **git-commit** 技能定义的规范（格式、类型、总结要求），分析变更内容生成 commit message。
+依据 **skill-git-commit** 技能定义的规范（格式、类型、总结要求），分析变更内容生成 commit message。
 
 用户提供了 `$ARGUMENTS` 时，将其作为参考，但仍然基于 diff 进行完整分析。
 

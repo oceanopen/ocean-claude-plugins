@@ -1,7 +1,7 @@
 ---
 argument-hint: 演示文稿主题或描述
 description: 制作专业演示文稿、PPT、幻灯片、演讲稿、Keynote、分享稿、小红书图文。提供 36 主题、31 布局、47 动画、演讲者模式和逐字稿。
-skills: external-html-ppt-skill
+skills: skill-external-html-ppt-skill
 ---
 
 # /ocean-office:external-html-ppt-skill
@@ -20,5 +20,5 @@ skills: external-html-ppt-skill
 ## 实施步骤
 
 1. **理解需求**：询问演示文稿的用途、受众、页数和风格偏好
-2. **委派执行**：调用 `external-html-ppt-skill` 技能完成所有制作工作
+2. **委派执行**：调用 `skill-external-html-ppt-skill` 技能完成所有制作工作
 3. **交付文件**：输出可直接在浏览器打开的 HTML 文件

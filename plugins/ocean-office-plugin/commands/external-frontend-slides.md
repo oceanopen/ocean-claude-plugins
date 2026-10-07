@@ -1,7 +1,7 @@
 ---
 argument-hint: 演示文稿主题或描述
 description: 转换 PPT/PPTX 为网页演示文稿，或制作创意独特、个性化设计的 HTML 幻灯片。提供 34 大胆模板和可视化风格探索。
-skills: external-frontend-slides
+skills: skill-external-frontend-slides
 ---
 
 # /ocean-office:external-frontend-slides
@@ -20,5 +20,5 @@ skills: external-frontend-slides
 ## 实施步骤
 
 1. **理解需求**：询问演示文稿的用途、受众、内容准备情况和密度偏好
-2. **委派执行**：调用 `external-frontend-slides` 技能完成所有制作工作
+2. **委派执行**：调用 `skill-external-frontend-slides` 技能完成所有制作工作
 3. **交付文件**：输出可直接在浏览器打开的 HTML 文件

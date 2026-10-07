@@ -1,5 +1,5 @@
 ---
-name: external-frontend-slides
+name: skill-external-frontend-slides
 description: 零依赖 HTML 演示文稿执行引擎 — 34 设计模板、PPT 转换、可视化风格探索、内容密度模式。由 command 层路由触发，本文件提供完整制作工作流。
 ---
 

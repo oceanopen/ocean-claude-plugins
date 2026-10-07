@@ -1,5 +1,5 @@
 ---
-name: task-split
+name: skill-task-split
 description: 定义任务拆分文档（docs/task_<主题>.md）的结构契约、状态回写规则与子任务拆分规范，供 task-split 命令（首次生成与增量重跑）遵守；文档即进度唯一真相源，执行方按文档头部内置的回写规则跟进状态
 ---
 

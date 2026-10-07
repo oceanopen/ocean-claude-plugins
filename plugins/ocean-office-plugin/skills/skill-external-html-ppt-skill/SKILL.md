@@ -1,5 +1,5 @@
 ---
-name: external-html-ppt-skill
+name: skill-external-html-ppt-skill
 description: 静态 HTML 演示文稿执行引擎 — 36 主题、31 布局、47 动画、演讲者模式。由 command 层路由触发，本文件提供完整制作工作流。
 ---
 
@@ -102,7 +102,7 @@ description: 静态 HTML 演示文稿执行引擎 — 36 主题、31 布局、47
 ## 文件结构
 
 ```
-external-html-ppt-skill/
+skill-external-html-ppt-skill/
 ├── SKILL.md                 （本文件）
 ├── references/              （详细目录，按需加载）
 ├── assets/

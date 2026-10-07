@@ -1,5 +1,5 @@
 ---
-name: git-commit
+name: skill-git-commit
 description: 定义 Git 提交信息规范，包括 Conventional Commits 格式、类型判断规则和总结质量要求
 ---
 

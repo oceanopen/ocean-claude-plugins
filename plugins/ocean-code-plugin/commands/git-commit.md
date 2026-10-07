@@ -2,19 +2,19 @@
 allowed-tools: AskUserQuestion, Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*), Bash(git push:*), Bash(git log:*), Bash(git branch:*), Read, Glob, Grep, Skill
 argument-hint: [message]
 description: 智能 Git 提交，自动分析变更生成规范 commit message 并执行提交
-skills: git-commit
+skills: skill-git-commit
 ---
 
-你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 **git-commit** 技能定义的规范，分析当前分支全部变更并生成 commit message，然后展示预览供用户确认，确认后再执行提交，提交后询问是否推送。
+你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 **skill-git-commit** 技能定义的规范，分析当前分支全部变更并生成 commit message，然后展示预览供用户确认，确认后再执行提交，提交后询问是否推送。
 
 # /ocean-code:git-commit
 
-依据 **git-commit** 技能的提交信息规范，对当前分支全部变更进行分析，生成规范 commit message，展示预览供用户确认后再提交，提交后询问是否推送。
+依据 **skill-git-commit** 技能的提交信息规范，对当前分支全部变更进行分析，生成规范 commit message，展示预览供用户确认后再提交，提交后询问是否推送。
 
 ## 核心功能
 
 1. **全量变更分析**：获取当前分支的全部 git diff 内容（staged 与 unstaged）
-2. **智能生成 message**：依据 git-commit 技能规范生成精炼准确的 commit message
+2. **智能生成 message**：依据 skill-git-commit 技能规范生成精炼准确的 commit message
 3. **预览确认**：先以正文形式展示变更总结、commit message、变更文件列表，再用 `AskUserQuestion` 询问是否提交
 4. **自动暂存**：用户确认后暂存当前分支全部改动
 5. **执行提交**：用户确认后执行 git commit
@@ -144,7 +144,7 @@ git diff HEAD
 
 ### 步骤 5：分析变更并生成 Commit Message
 
-依据 **git-commit** 技能定义的规范（格式、类型、总结要求），分析变更内容生成 commit message。
+依据 **skill-git-commit** 技能定义的规范（格式、类型、总结要求），分析变更内容生成 commit message。
 
 用户提供了 `$ARGUMENTS` 时，将其作为参考，但仍然基于 diff 进行完整分析。
 
