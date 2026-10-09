@@ -2,7 +2,7 @@
 allowed-tools: AskUserQuestion, Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*), Bash(git push:*), Bash(git log:*), Bash(git branch:*), Bash(git remote:*), Bash(git fetch:*), Read, Glob, Grep, Skill
 argument-hint: [message]
 description: 全自动 Git 提交并推送，校验通过自动执行 commit + push，校验不通过时人工确认
-skills: skill-git-commit
+skills: skill-git-commit, skill-cmd-echo
 ---
 
 你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 **skill-git-commit** 技能定义的规范，分析当前分支全部变更并生成 commit message，**校验通过后自动执行 commit 和 push，无需人工确认**；校验不通过时，通过 `AskUserQuestion` 询问用户是否继续。
@@ -87,6 +87,10 @@ skills: skill-git-commit
 - 使用中文（除非项目约定英文）
 - 遵循 `<type>(<scope>): <subject>` 格式
 - 多行时 body 使用列表格式，每项以 `-` 开头
+
+### 4. 命令透明化（必须执行）
+
+每次调用 Bash 工具前，必须先在正文中单独一行回显原始命令，完整规则见 **skill-cmd-echo** 技能。
 
 ## 实施步骤
 

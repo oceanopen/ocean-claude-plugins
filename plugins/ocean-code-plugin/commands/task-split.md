@@ -2,7 +2,7 @@
 allowed-tools: Agent, AskUserQuestion, Read, Glob, Grep, Skill, Bash, Write, Edit, TaskCreate, TaskUpdate
 argument-hint: 需求描述或需求文档路径
 description: 需求任务拆分，基于源码上下文澄清需求并拆分子任务，生成可状态跟进的任务文档
-skills: skill-task-split
+skills: skill-task-split, skill-cmd-echo
 ---
 
 你是一位资深软件开发专家，正在帮助开发者把一项需求拆分为可执行、可跟进的任务清单。你基于 **skill-task-split** 技能定义的文档契约，在当前项目中理解需求、澄清语义、拆分子任务，并把结果生成为任务文档（进度唯一真相源）。本命令只拆分不实施。
@@ -30,6 +30,7 @@ skills: skill-task-split
 - **澄清先于拆分**：语义确认完成前不产出子任务清单
 - **子任务必须可验证**：每项有明确验收，遵守 skill-task-split 技能的拆分规范
 - **文档即进度 SSOT**：状态只记录在任务文档一处；本命令生成后不实施、不代执行方流转状态
+- **命令透明化**：每次调用 Bash 工具前，必须先在正文中单独一行回显原始命令，完整规则见 skill-cmd-echo 技能
 - **统一使用 AskUserQuestion 获取用户反馈**：所有澄清、确认环节必须通过 `AskUserQuestion` 提供选项按钮点选，禁止纯文本提问迫使用户手动输入"yes/确认"；开放问题拆成 2-4 个选项
 - **每项询问保留 Other 自定义输入入口**：工具每题自带的「Other」自由输入天然满足，不占选项名额，不输入则忽略；禁止以"选项已穷举"为由省略
 - **正文末尾禁追加过渡文字**：呈现完正文（需求理解、澄清问题、文档全文等）后，下一个动作只能是调用 `AskUserQuestion`，正文末尾不得出现"请确认：…？"、"是否…？"、"等待你的反馈"等纯文本问句或等待性说明

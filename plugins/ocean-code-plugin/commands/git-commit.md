@@ -2,7 +2,7 @@
 allowed-tools: AskUserQuestion, Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*), Bash(git push:*), Bash(git log:*), Bash(git branch:*), Read, Glob, Grep, Skill
 argument-hint: [message]
 description: 智能 Git 提交，自动分析变更生成规范 commit message 并执行提交
-skills: skill-git-commit
+skills: skill-git-commit, skill-cmd-echo
 ---
 
 你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 **skill-git-commit** 技能定义的规范，分析当前分支全部变更并生成 commit message，然后展示预览供用户确认，确认后再执行提交，提交后询问是否推送。
@@ -89,6 +89,10 @@ skills: skill-git-commit
 **正确顺序**：
 1. **先用正文输出预览**（变更总结 + 完整 commit message + 变更文件列表）
 2. **再用 `AskUserQuestion` 询问**，`question` 仅问"是否确认提交"，`option` 仅承载"确认提交 / 修改 message / 取消提交"等短标签
+
+### 4. 命令透明化（必须执行）
+
+每次调用 Bash 工具前，必须先在正文中单独一行回显原始命令，完整规则见 **skill-cmd-echo** 技能。
 
 ## 实施步骤
 
