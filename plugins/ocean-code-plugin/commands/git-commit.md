@@ -1,24 +1,25 @@
 ---
-allowed-tools: AskUserQuestion, Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*), Bash(git push:*), Bash(git log:*), Bash(git branch:*), Read, Glob, Grep, Skill
+allowed-tools: AskUserQuestion, Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*), Bash(git push:*), Bash(git log:*), Bash(git branch:*), Bash(git remote:*), Bash(git fetch:*), Bash(git pull:*), Bash(git stash:*), Bash(git rebase:*), Read, Glob, Grep, Skill
 argument-hint: [message]
 description: 智能 Git 提交，自动分析变更生成规范 commit message 并执行提交
-skills: skill-git-commit, skill-cmd-echo
+skills: skill-git-commit, skill-git-sync, skill-cmd-echo
 ---
 
-你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 **skill-git-commit** 技能定义的规范，分析当前分支全部变更并生成 commit message，然后展示预览供用户确认，确认后再执行提交，提交后询问是否推送。
+你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 **skill-git-commit** 技能定义的规范，分析当前分支全部变更并生成 commit message，然后展示预览供用户确认，确认后再执行提交，提交后询问是否推送。提交前依据 **skill-git-sync** 技能契约同步远程分支，避免提交后 push 才发现本地落后于远程。
 
 # /ocean-code:git-commit
 
-依据 **skill-git-commit** 技能的提交信息规范，对当前分支全部变更进行分析，生成规范 commit message，展示预览供用户确认后再提交，提交后询问是否推送。
+依据 **skill-git-commit** 技能的提交信息规范，对当前分支全部变更进行分析，生成规范 commit message，展示预览供用户确认后再提交，提交后询问是否推送。提交前先依据 **skill-git-sync** 技能契约同步远程分支，落后则自动对齐。
 
 ## 核心功能
 
-1. **全量变更分析**：获取当前分支的全部 git diff 内容（staged 与 unstaged）
-2. **智能生成 message**：依据 skill-git-commit 技能规范生成精炼准确的 commit message
-3. **预览确认**：先以正文形式展示变更总结、commit message、变更文件列表，再用 `AskUserQuestion` 询问是否提交
-4. **自动暂存**：用户确认后暂存当前分支全部改动
-5. **执行提交**：用户确认后执行 git commit
-6. **确认推送**：提交成功后询问用户是否推送到远程
+1. **提交前同步**：依据 skill-git-sync 契约检测并同步远程分支，落后则先对齐再提交
+2. **全量变更分析**：获取当前分支的全部 git diff 内容（staged 与 unstaged）
+3. **智能生成 message**：依据 skill-git-commit 技能规范生成精炼准确的 commit message
+4. **预览确认**：先以正文形式展示变更总结、commit message、变更文件列表，再用 `AskUserQuestion` 询问是否提交
+5. **自动暂存**：用户确认后暂存当前分支全部改动
+6. **执行提交**：用户确认后执行 git commit
+7. **确认推送**：提交成功后询问用户是否推送到远程
 
 
 ## 使用方法
@@ -134,11 +135,28 @@ git config user.email
   git config --local user.email "<user_email>"
 ```
 
-### 步骤 3：敏感文件检查
+### 步骤 3：同步远程分支
+
+依据 **skill-git-sync** 技能定义的契约，在提交前同步远程分支：
+
+```bash
+git fetch
+git branch -vv
+```
+
+- 本地不落后 → 同步通过，直接进入步骤 4
+- 本地落后 → 自动同步：工作区干净执行 `git pull --rebase`；有未提交变更执行 `git stash push -u` → `git pull --rebase` → `git stash pop`
+- 出现冲突 → 按 skill-git-sync 统一入口处理：`AskUserQuestion`（自动处理（推荐）/ 人工处理 / 中止命令），冲突解决后不中止流程
+- **冲突解决后 → 通过 `AskUserQuestion` 询问用户是否继续提交流程（继续提交 / 中止提交）**
+- **仅用户在冲突处理中选择「中止命令」时停止提交流程**
+
+完整流程、冲突处理与禁止操作见 **skill-git-sync** 技能。
+
+### 步骤 4：敏感文件检查
 
 检查变更文件列表，若包含 `.env*`、`credentials*`、`id_rsa*`、`*.key`、`*.pem` 等密钥/凭据文件，**停止提交并警告用户**。
 
-### 步骤 4：获取当前分支全部 Diff
+### 步骤 5：获取当前分支全部 Diff
 
 ```bash
 git diff HEAD
@@ -146,13 +164,13 @@ git diff HEAD
 
 获取 staged 与 unstaged 的完整变更内容。
 
-### 步骤 5：分析变更并生成 Commit Message
+### 步骤 6：分析变更并生成 Commit Message
 
 依据 **skill-git-commit** 技能定义的规范（格式、类型、总结要求），分析变更内容生成 commit message。
 
 用户提供了 `$ARGUMENTS` 时，将其作为参考，但仍然基于 diff 进行完整分析。
 
-### 步骤 6：用正文输出预览
+### 步骤 7：用正文输出预览
 
 > ⚠️ **此步骤必须以独立正文段输出预览内容，禁止合并到下一步的 `AskUserQuestion` 工具调用中。禁止跳过此步骤直接询问确认或提交。**
 
@@ -172,27 +190,27 @@ Commit Message：
 - [D] path/to/deleted/file
 ```
 
-输出正文预览后，**立即进入步骤 7**，通过 `AskUserQuestion` 询问用户是否确认。
+输出正文预览后，**立即进入步骤 8**，通过 `AskUserQuestion` 询问用户是否确认。
 
-### 步骤 7：通过 AskUserQuestion 询问是否确认提交
+### 步骤 8：通过 AskUserQuestion 询问是否确认提交
 
-> ⚠️ **强制阻断点。`AskUserQuestion` 的 `question` 字段和 `option` 标签禁止包含完整 commit message——完整内容必须已在步骤 6 以正文输出。**
+> ⚠️ **强制阻断点。`AskUserQuestion` 的 `question` 字段和 `option` 标签禁止包含完整 commit message——完整内容必须已在步骤 7 以正文输出。**
 
 `question` 仅问：**是否确认以上提交？**
 
 `AskUserQuestion` 选项（短标签）：
 
-- ✅ 确认提交 → 继续步骤 8（暂存）和步骤 9（提交）
-- ✏️ 修改 message → 根据反馈调整 commit message 后回到步骤 6 重新展示预览
+- ✅ 确认提交 → 继续步骤 9（暂存）和步骤 10（提交）
+- ✏️ 修改 message → 根据反馈调整 commit message 后回到步骤 7 重新展示预览
 - ❌ 取消提交 → 中止流程，不执行暂存和提交
 
-### 步骤 8：暂存全部改动
+### 步骤 9：暂存全部改动
 
 ```bash
 git add -A
 ```
 
-### 步骤 9：执行 Commit
+### 步骤 10：执行 Commit
 
 ```bash
 # 单行模式
@@ -206,14 +224,14 @@ git commit -m "<type>(<scope>): <subject>" -m "<body>"
 - 禁止使用 `--no-verify` 或 `--no-gpg-sign`
 - 禁止自动使用 `--amend`
 
-### 步骤 10：询问是否推送
+### 步骤 11：询问是否推送
 
 提交成功后，询问用户：**是否推送到远程仓库？**
 
 - 用户确认 → 执行 `git push`
 - 用户拒绝 → 跳过推送
 
-### 步骤 11：展示最终结果
+### 步骤 12：展示最终结果
 
 ```
 ✅ 提交成功
@@ -233,6 +251,7 @@ git commit -m "<type>(<scope>): <subject>" -m "<body>"
 | 场景 | 处理 |
 |------|------|
 | 无变更 | 提示用户先修改文件 |
+| 远程领先 | 提交前自动同步（skill-git-sync），冲突解决后询问是否继续提交流程，用户中止则停止流程 |
 | 含敏感文件 | 停止提交并警告 |
 | 合并冲突 | 暂停流程，提示先解决冲突 |
 | Hook 失败 | 显示错误信息，修复后创建新提交（不 amend） |
