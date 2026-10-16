@@ -49,47 +49,11 @@ skills: skill-git-commit, skill-git-sync, skill-cmd-echo
 
 ## 强制规则（不可协商）
 
-### 1. Commit Message 前缀（必须执行）
+### 1. Commit Message 规范（唯一来源）
 
-无前缀处理，忽略此项。
+格式（单行/多行模式）、类型判断（含多类型优先级）与总结质量要求，一律以 **skill-git-commit** 技能为唯一规范来源，本命令不另建副本。步骤 6 生成 message 前依据该技能的完整规范执行。
 
-### 2. Commit Message 格式
-
-**单行模式**（简单变更）：
-```
-<type>(<scope>): <subject>
-```
-
-**多行模式**（复杂变更）：
-```
-<type>(<scope>): <subject>
-
-- 变更点1
-- 变更点2
-- 变更点3
-```
-
-**类型**：`feat`(新功能) | `fix`(修复) | `docs`(文档) | `style`(格式) | `refactor`(重构) | `perf`(性能) | `test`(测试) | `chore`(杂项)
-
-### 3. 总结要求（到位、精炼、格式严谨）
-
-> ⚠️ **总结必须同时满足「到位」、「精炼」、「格式严谨」三个要求，缺一不可。**
-
-| 要求 | 说明 | 反例 | 正例 |
-|-----|------|-----|------|
-| **到位** | 说清「改了什么」+「为什么改」，让人一眼看懂变更意图 | ❌ "修改代码" ❌ "更新文件" | ✅ "修复登录页密码校验失败" |
-| **精炼** | 无废话，无冗余修饰，直接表达核心变更 | ❌ "对用户登录功能进行了一些相关的代码修改和优化" | ✅ "添加用户登录功能" |
-| **格式严谨** | 遵循 Conventional Commits 规范，类型、范围、主题格式正确 | ❌ "fix bug" ❌ "更新" | ✅ "fix(auth): 修复登录页密码校验失败" |
-| **具体** | 明确涉及的模块/组件/功能点 | ❌ "修复bug" | ✅ "修复登录页密码校验失败" |
-| **完整** | 多处变更时列出关键点，不遗漏重要改动 | ❌ 改了3个功能只提1个 | ✅ 列出所有关键变更点 |
-
-**格式要求**：
-- 动词开头、不加句号
-- 使用中文（除非项目约定英文）
-- 遵循 `<type>(<scope>): <subject>` 格式
-- 多行时 body 使用列表格式，每项以 `-` 开头
-
-### 4. 命令透明化（必须执行）
+### 2. 命令透明化（必须执行）
 
 每次调用 Bash 工具前，必须先在正文中单独一行回显原始命令，完整规则见 **skill-cmd-echo** 技能。
 
@@ -126,11 +90,11 @@ git config user.email
 
 全局配置：
   git config user.name "xxx"
-  git config user.email "xxx@webank.com"
+  git config user.email "user@example.com"
 
 或当前项目配置：
   git config --local user.name "xxx"
-  git config --local user.email "xxx@webank.com"
+  git config --local user.email "user@example.com"
 ```
 
 `AskUserQuestion` 选项：
