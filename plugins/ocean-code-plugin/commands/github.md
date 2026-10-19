@@ -1,7 +1,7 @@
 ---
 allowed-tools: AskUserQuestion, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git fetch:*), Bash(git branch:*), Bash(git checkout:*), Bash(git check-ref-format:*), Bash(git push:*), Bash(git pull:*), Bash(git remote:*), Bash(git rev-parse:*), Bash(git worktree:*), Bash(git ls-remote:*), Bash(ls:*), Bash(cd:*), Bash(gh:*), Read, Glob, Grep, Skill
 argument-hint: [branch <name> [base] | pr [补充说明] | merge [PR链接] | worktree [功能描述]]
-description: 零记忆 GitHub 工作流：交互引导创建远程分支并本地跟踪检出、生成并创建 PR、合并 PR 并删除远程分支、创建与清理 worktree，参数一律经选项确认
+description: 零记忆 GitHub 工作流：交互引导创建远程分支并本地跟踪检出、生成并创建 PR、合并 PR 并删除远程分支、创建与查看和清理 worktree，参数一律经选项确认
 skills: skill-git-commit, skill-cmd-echo
 ---
 
@@ -9,7 +9,7 @@ skills: skill-git-commit, skill-cmd-echo
 
 # /ocean-code:github
 
-基于 gh CLI 的 GitHub 工作流命令，包含四个子动作：**branch**（创建远程分支并本地跟踪检出）、**pr**（生成 PR 标题/描述并创建）、**merge**（合并 PR 并删除分支）、**worktree**（在主仓库父目录创建 worktree 并新建远程分支跟踪检出，或识别并清理无效 worktree）。子命令可直接识别，子命令的参数一律经选项确认后才执行。
+基于 gh CLI 的 GitHub 工作流命令，包含四个子动作：**branch**（创建远程分支并本地跟踪检出）、**pr**（生成 PR 标题/描述并创建）、**merge**（合并 PR 并删除分支）、**worktree**（在主仓库父目录创建 worktree 并新建远程分支跟踪检出，或查看、清理 worktree）。子命令可直接识别，子命令的参数一律经选项确认后才执行。
 
 ## 核心功能
 
@@ -17,7 +17,7 @@ skills: skill-git-commit, skill-cmd-echo
 2. **branch**：从远程默认分支（或指定起点）的最新远程引用创建远程分支，本地 `checkout -t` 跟踪检出——不经本地分支，不受本地落后影响
 3. **pr**：基于提交与变更分析生成 PR 标题与描述，正文预览确认后创建
 4. **merge**：拉取开放 PR 列表供选择，按选定策略合并并删除远程分支，合并后对齐本地默认分支
-5. **worktree**：按功能描述生成 slug，在主仓库父目录创建 `{仓库名}_{slug}` worktree 并新建远程分支跟踪检出；或全量列出 worktree、自动识别无效项（远程分支不存在 / 目录名与分支不一致 / 目录已丢失）供多选清理
+5. **worktree**：按功能描述生成 slug，在主仓库父目录创建 `{仓库名}_{slug}` worktree 并新建远程分支跟踪检出；或列出全部 worktree 的目录与当前分支；或自动识别无效项（远程分支不存在 / 目录名与分支不一致 / 目录已丢失）供多选清理
 
 ## 零记忆交互契约
 
@@ -59,6 +59,7 @@ skills: skill-git-commit, skill-cmd-echo
 | merge | 选择 PR + 合并策略 | 正文 PR 概要 → 确认合并 / 取消 |
 | worktree 创建 | 功能描述 slug + type 前缀 + 分支名 + 目录名 + 起点（分两轮：轮 1 功能描述 → slug，轮 2 其余四项） | 无独立预览；目录已存在 / 分支冲突时追问 |
 | worktree 清理 | 多选清理目标（无效项置顶附原因） | 正文清理范围与原因 → 确认清理 / 取消 |
+| worktree 查看 | 无参数（只读） | 无（点击后直接展示列表） |
 
 ## 使用方法
 
@@ -138,7 +139,7 @@ gh auth status
 - 首个参数为 `pr` → 子动作 pr，其余参数合并为补充说明
 - 首个参数为 `merge` → 子动作 merge，其余参数为 PR 编号
 - 首个参数为 `worktree` → 子动作 worktree，其余参数合并为功能描述
-- 无参数或无法识别 → `AskUserQuestion` 单选子命令（branch：创建远程分支并检出 / pr：创建 PR / merge：合并 PR / worktree：创建或清理 worktree），选定后进入对应子动作
+- 无参数或无法识别 → `AskUserQuestion` 单选子命令（branch：创建远程分支并检出 / pr：创建 PR / merge：合并 PR / worktree：创建/查看/清理 worktree），选定后进入对应子动作
 
 ### 子动作 branch：创建远程分支并本地跟踪检出
 
@@ -417,11 +418,12 @@ PR：#<编号> <标题>
 当前分支：<默认分支>（已对齐远程最新）
 ```
 
-### 子动作 worktree：创建 / 清理 worktree
+### 子动作 worktree：创建 / 查看 / 清理 worktree
 
 进入 worktree 子动作后，先经 `AskUserQuestion` 选择动作：
 
 - **创建 worktree（推荐）**：按功能描述生成 slug，创建远程分支并落在主仓库父目录的新 worktree 中
+- **查看 worktree**：列出当前仓库全部 worktree 的目录名称与当前分支
 - **清理 worktree**：全量列出 worktree，自动识别无效项供多选清理
 
 #### worktree 创建 步骤 1：预检与收集
@@ -536,6 +538,27 @@ Worktree：<绝对路径>
 - 提交：/ocean-code:git-commit
 - 创建 PR：/ocean-code:github pr
 ```
+
+#### worktree 查看 步骤 1：收集 worktree 列表
+
+```bash
+git worktree list
+```
+
+> 查看为只读操作，无参数、无需主仓库检查——`git worktree list` 在主仓库或任一链接 worktree 内执行结果一致。
+
+#### worktree 查看 步骤 2：正文展示
+
+```
+📋 Worktree 列表
+
+- <目录名>（主仓库）｜<完整路径>｜分支：<分支名>
+- <目录名>｜<完整路径>｜分支：<分支名>
+- ...
+```
+
+- 主仓库行标注「（主仓库）」；目录已丢失（prunable）的 worktree 标注「（目录已丢失）」
+- 无链接 worktree → 仅展示主仓库行，并提示「暂无链接 worktree，可通过创建动作新增」
 
 #### worktree 清理 步骤 1：主仓库检查
 
