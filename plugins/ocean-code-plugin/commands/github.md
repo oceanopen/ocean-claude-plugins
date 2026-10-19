@@ -1,15 +1,15 @@
 ---
-allowed-tools: AskUserQuestion, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git fetch:*), Bash(git branch:*), Bash(git checkout:*), Bash(git check-ref-format:*), Bash(git push:*), Bash(git pull:*), Bash(git remote:*), Bash(git rev-parse:*), Bash(git worktree:*), Bash(git ls-remote:*), Bash(ls:*), Bash(cd:*), Bash(gh:*), Read, Glob, Grep, Skill
-argument-hint: [branch <name> [base] | pr [补充说明] | merge [PR链接] | worktree [功能描述]]
-description: 零记忆 GitHub 工作流：交互引导创建远程分支并本地跟踪检出、生成并创建 PR、合并 PR 并删除远程分支、创建与查看和清理 worktree，参数一律经选项确认
+allowed-tools: AskUserQuestion, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git fetch:*), Bash(git branch:*), Bash(git checkout:*), Bash(git check-ref-format:*), Bash(git push:*), Bash(git pull:*), Bash(git remote:*), Bash(git rev-parse:*), Bash(git worktree:*), Bash(git ls-remote:*), Bash(git for-each-ref:*), Bash(ls:*), Bash(cd:*), Bash(gh:*), Read, Glob, Grep, Skill
+argument-hint: [branch <name> [base] | pr [补充说明] | merge [PR链接] | worktree [功能描述|远程分支名]]
+description: 零记忆 GitHub 工作流：交互引导创建远程分支并本地跟踪检出、生成并创建 PR、合并 PR 并删除远程分支、创建/检出/查看和清理 worktree，参数一律经选项确认
 skills: skill-git-commit, skill-cmd-echo
 ---
 
-你是一位资深 GitHub 工作流专家，精通 gh CLI 与 Git 分支管理。你遵循**零记忆交互契约**引导用户完成分支创建、PR 创建与合并、worktree 创建与清理：用户只需记住 `/ocean-code:github` 一个入口，子命令与参数全部通过 `AskUserQuestion` 交互引导确认，无需记忆任何命令格式。
+你是一位资深 GitHub 工作流专家，精通 gh CLI 与 Git 分支管理。你遵循**零记忆交互契约**引导用户完成分支创建、PR 创建与合并、worktree 创建/检出/查看/清理：用户只需记住 `/ocean-code:github` 一个入口，子命令与参数全部通过 `AskUserQuestion` 交互引导确认，无需记忆任何命令格式。
 
 # /ocean-code:github
 
-基于 gh CLI 的 GitHub 工作流命令，包含四个子动作：**branch**（创建远程分支并本地跟踪检出）、**pr**（生成 PR 标题/描述并创建）、**merge**（合并 PR 并删除分支）、**worktree**（在主仓库父目录创建 worktree 并新建远程分支跟踪检出，或查看、清理 worktree）。子命令可直接识别，子命令的参数一律经选项确认后才执行。
+基于 gh CLI 的 GitHub 工作流命令，包含四个子动作：**branch**（创建远程分支并本地跟踪检出）、**pr**（生成 PR 标题/描述并创建）、**merge**（合并 PR 并删除分支）、**worktree**（在主仓库父目录创建 worktree 并新建远程分支跟踪检出，或检出已有远程分支到新 worktree，或查看、清理 worktree）。子命令可直接识别，子命令的参数一律经选项确认后才执行。
 
 ## 核心功能
 
@@ -17,7 +17,7 @@ skills: skill-git-commit, skill-cmd-echo
 2. **branch**：从远程默认分支（或指定起点）的最新远程引用创建远程分支，本地 `checkout -t` 跟踪检出——不经本地分支，不受本地落后影响
 3. **pr**：基于提交与变更分析生成 PR 标题与描述，正文预览确认后创建
 4. **merge**：拉取开放 PR 列表供选择，按选定策略合并并删除远程分支，合并后对齐本地默认分支
-5. **worktree**：按功能描述生成 slug，在主仓库父目录创建 `{仓库名}_{slug}` worktree 并新建远程分支跟踪检出；或列出全部 worktree 的目录与当前分支；或自动识别无效项（远程分支不存在 / 目录名与分支不一致 / 目录已丢失）供多选清理
+5. **worktree**：按功能描述生成 slug，在主仓库父目录创建 `{仓库名}_{slug}` worktree 并新建远程分支跟踪检出；或选择已有远程分支，自动推导目录名（`{仓库名}_{分支名去 type 前缀}`）创建 worktree 并跟踪检出；或列出全部 worktree 的目录与当前分支；或自动识别无效项（远程分支不存在 / 目录名与分支不一致 / 目录已丢失）供多选清理
 
 ## 零记忆交互契约
 
@@ -26,7 +26,7 @@ skills: skill-git-commit, skill-cmd-echo
 ### 子命令识别
 
 - 裸调用（无 `$ARGUMENTS`）→ `AskUserQuestion` 单选子命令：branch / pr / merge / worktree
-- 首个参数为 `branch` / `pr` / `merge` / `worktree` → 直接识别，跳过子命令选择，其余参数视为该子命令的**待确认参数**（worktree 的其余参数视为功能描述）
+- 首个参数为 `branch` / `pr` / `merge` / `worktree` → 直接识别，跳过子命令选择，其余参数视为该子命令的**待确认参数**（worktree 的其余参数视为功能描述；命中已有远程分支时进入检出流程）
 - 首个参数无法识别 → 视同裸调用，通过 `AskUserQuestion` 选择子命令
 
 ### 参数确认铁律
@@ -46,6 +46,7 @@ skills: skill-git-commit, skill-cmd-echo
 | branch 分支名 | 最近提交主题衍生的 kebab-case 候选名（去除 type 前缀） |
 | merge PR | 已输入链接解析编号后经 `gh pr view` 校验；未输入则 `gh pr list` 开放 PR 列表 |
 | worktree 功能描述 / slug | 最近提交主题衍生的 slug 候选（去除 type 前缀）；用户经 `Other` 输入中文/英文描述时由翻译生成 |
+| worktree 检出分支 | 已输入参数校验命中远程分支（`git branch -r --list origin/<参数>` 非空）；`git for-each-ref refs/remotes/origin --sort=-committerdate --format=%(refname:short) --count=10` 近期远程分支 |
 | worktree 清理目标 | `git worktree list` 链接 worktree 全量列表，无效项置顶并附原因 |
 
 ### 参数确认与执行确认的关系
@@ -58,6 +59,7 @@ skills: skill-git-commit, skill-cmd-echo
 | pr | 目标分支 + 补充说明 | 正文预览 → 确认创建 / 修改内容 / 取消 |
 | merge | 选择 PR + 合并策略 | 正文 PR 概要 → 确认合并 / 取消 |
 | worktree 创建 | 功能描述 slug + type 前缀 + 分支名 + 目录名 + 起点（分两轮：轮 1 功能描述 → slug，轮 2 其余四项） | 无独立预览；目录已存在 / 分支冲突时追问 |
+| worktree 检出 | 分支选择 + 目录名（一轮 ≤2 问：目录名由分支名去 type 前缀自动推导，可改） | 无独立预览；目录已存在 / 分支已被其他 worktree 检出时中止 |
 | worktree 清理 | 多选清理目标（无效项置顶附原因） | 正文清理范围与原因 → 确认清理 / 取消 |
 | worktree 查看 | 无参数（只读） | 无（点击后直接展示列表） |
 
@@ -138,8 +140,8 @@ gh auth status
 - 首个参数为 `branch` → 子动作 branch，其余参数依序为 `<name> [base]`
 - 首个参数为 `pr` → 子动作 pr，其余参数合并为补充说明
 - 首个参数为 `merge` → 子动作 merge，其余参数为 PR 编号
-- 首个参数为 `worktree` → 子动作 worktree，其余参数合并为功能描述
-- 无参数或无法识别 → `AskUserQuestion` 单选子命令（branch：创建远程分支并检出 / pr：创建 PR / merge：合并 PR / worktree：创建/查看/清理 worktree），选定后进入对应子动作
+- 首个参数为 `worktree` → 子动作 worktree，其余参数合并为功能描述；先 `git fetch origin` 再校验（`git branch -r --list origin/<参数>` 非空），命中已有远程分支 → 进入检出流程，未命中 → 视为功能描述
+- 无参数或无法识别 → `AskUserQuestion` 单选子命令（branch：创建远程分支并检出 / pr：创建 PR / merge：合并 PR / worktree：创建/检出/查看/清理 worktree），选定后进入对应子动作
 
 ### 子动作 branch：创建远程分支并本地跟踪检出
 
@@ -418,15 +420,18 @@ PR：#<编号> <标题>
 当前分支：<默认分支>（已对齐远程最新）
 ```
 
-### 子动作 worktree：创建 / 查看 / 清理 worktree
+### 子动作 worktree：创建 / 检出 / 查看 / 清理 worktree
 
 进入 worktree 子动作后，先经 `AskUserQuestion` 选择动作：
 
 - **创建 worktree（推荐）**：按功能描述生成 slug，创建远程分支并落在主仓库父目录的新 worktree 中
+- **检出已有远程分支**：选择已有远程分支，自动推导目录名（`{仓库名}_{分支名去 type 前缀}`），在主仓库父目录创建 worktree 并跟踪检出
 - **查看 worktree**：列出当前仓库全部 worktree 的目录名称与当前分支
 - **清理 worktree**：全量列出 worktree，自动识别无效项供多选清理
 
-#### worktree 创建 步骤 1：预检与收集
+#### worktree 创建
+
+##### 步骤 1：预检与收集
 
 共用环境预检（步骤 1）之外，收集：
 
@@ -455,7 +460,7 @@ git log --oneline -5
 - 现有 worktree → 冲突检查依据；近期远程分支 → 起点候选
 - 最近提交主题 → 衍生 slug 候选（英文单词序列，去除 type 前缀）
 
-#### worktree 创建 步骤 2：轮 1 参数确认（功能描述 → slug）
+##### 步骤 2：轮 1 参数确认（功能描述 → slug）
 
 slug 规范：英文单词小写、`_` 分隔、≤20 字符（如 `github_worktree_cmd`）。
 
@@ -463,7 +468,7 @@ slug 规范：英文单词小写、`_` 分隔、≤20 字符（如 `github_workt
 |---|---|
 | 功能描述 / slug | 已输入参数经校验（转换后为合法 slug）标注「已输入」置首；未输入则提交主题衍生 slug 候选置首；`Other` 输入中文或英文功能描述，由我翻译生成 slug |
 
-#### worktree 创建 步骤 3：轮 2 参数确认（一次 `AskUserQuestion` ≤4 问）
+##### 步骤 3：轮 2 参数确认（一次 `AskUserQuestion` ≤4 问）
 
 | 问题 | 选项构成 |
 |---|---|
@@ -472,7 +477,7 @@ slug 规范：英文单词小写、`_` 分隔、≤20 字符（如 `github_workt
 | ③ 目录名 | `<仓库名>_<slug>`（推荐）置首，注明位于主仓库父目录（与仓库同级）；`Other` 自由输入 |
 | ④ 起点 base | `origin/<默认分支>(推荐)` 置首 + 近期远程分支候选；`Other` 自由输入 |
 
-#### worktree 创建 步骤 4：冲突检查
+##### 步骤 4：冲突检查
 
 ```bash
 ls -d <worktree 路径>
@@ -493,7 +498,7 @@ git branch --list <分支名>
 - 输出非空且该分支已出现在 `git worktree list` 中 → 中止，提示先处理对应 worktree
 - 输出非空且未被任何 worktree 检出 → `AskUserQuestion`：在新 worktree 中检出既有分支（推荐）/ 中止
 
-#### worktree 创建 步骤 5：创建远程分支（复用 branch 步骤 4）
+##### 步骤 5：创建远程分支（复用 branch 步骤 4）
 
 ```bash
 git push origin origin/<base>:refs/heads/<分支名>
@@ -505,7 +510,7 @@ git push origin origin/<base>:refs/heads/<分支名>
 git fetch origin <分支名>
 ```
 
-#### worktree 创建 步骤 6：创建 worktree 并跟踪检出
+##### 步骤 6：创建 worktree 并跟踪检出
 
 新建分支：
 
@@ -521,7 +526,7 @@ git worktree add --track -b <分支名> <worktree 路径> origin/<分支名>
 git worktree add --track <worktree 路径> <本地分支名>
 ```
 
-#### worktree 创建 步骤 7：进入 worktree 并展示结果
+##### 步骤 7：进入 worktree 并展示结果
 
 ```bash
 cd <worktree 路径>
@@ -539,7 +544,93 @@ Worktree：<绝对路径>
 - 创建 PR：/ocean-code:github pr
 ```
 
-#### worktree 查看 步骤 1：收集 worktree 列表
+#### worktree 检出
+
+##### 步骤 1：预检与收集
+
+共用环境预检（步骤 1）之外，收集：
+
+```bash
+git fetch origin
+```
+
+```bash
+git rev-parse --show-toplevel
+```
+
+```bash
+git worktree list
+```
+
+```bash
+git for-each-ref refs/remotes/origin --sort=-committerdate --format=%(refname:short) --count=10
+```
+
+- `git fetch origin` 保证远程引用新鲜，已输入分支名校验以 fetch 后的远程引用为准
+- `git rev-parse --show-toplevel` → 记仓库根为 `<仓库根>`；worktree 落点记为 `<worktree 路径>` = `<仓库根>/../<目录名>`（绝对路径，不受当前 cwd 影响）
+- 近期远程分支 → 分支选择候选
+
+##### 步骤 2：参数确认（一次 `AskUserQuestion` ≤2 问）
+
+| 问题 | 选项构成 |
+|---|---|
+| ① 分支 | 已输入参数命中远程分支标注「已输入」置首（推荐）；近期远程分支候选置后；`Other` 自由输入 |
+| ② 目录名 | `<仓库名>_<分支名去 type 前缀>`（推荐）置首，注明位于主仓库父目录（与仓库同级）；`Other` 自由输入 |
+
+目录名推导规则：按 skill-git-commit 类型判断规则识别并去除 type 前缀（如 `feat_acp_ironpark_adapter` → `acp_ironpark_adapter`）；无 type 前缀用分支全名。已输入参数未命中远程分支 → 正文提示后当作未输入，视为功能描述回落创建流程。
+
+##### 步骤 3：冲突检查
+
+```bash
+ls -d <worktree 路径>
+```
+
+- 输出非空（目录已存在）→ 中止，提示清理旧目录或经 `Other` 更名后重试
+
+```bash
+git branch --list <分支名>
+```
+
+- 输出非空且该分支已出现在 `git worktree list` 中 → 中止，提示先处理对应 worktree
+- 输出非空且未被任何 worktree 检出 → 记录走本地分支变体（步骤 4）
+
+##### 步骤 4：创建 worktree 并跟踪检出
+
+仅远程分支存在（无本地分支）：
+
+```bash
+git worktree add --track -b <分支名> <worktree 路径> origin/<分支名>
+```
+
+> 一条命令完成建目录、建本地分支（指向已有远程分支）并跟踪检出，`--track` 保证上游跟踪成立。
+
+本地分支已存在且未检出：
+
+```bash
+git worktree add --track <worktree 路径> <分支名>
+```
+
+##### 步骤 5：进入 worktree 并展示结果
+
+```bash
+cd <worktree 路径>
+```
+
+```
+✅ Worktree 检出完成
+
+Worktree：<绝对路径>
+远程分支：origin/<分支名>（已有分支）
+本地分支：<分支名>（跟踪 origin/<分支名>）
+
+后续提交与 PR 操作请在本 worktree 目录下进行：
+- 提交：/ocean-code:git-commit
+- 创建 PR：/ocean-code:github pr
+```
+
+#### worktree 查看
+
+##### 步骤 1：收集 worktree 列表
 
 ```bash
 git worktree list
@@ -547,7 +638,7 @@ git worktree list
 
 > 查看为只读操作，无参数、无需主仓库检查——`git worktree list` 在主仓库或任一链接 worktree 内执行结果一致。
 
-#### worktree 查看 步骤 2：正文展示
+##### 步骤 2：正文展示
 
 ```
 📋 Worktree 列表
@@ -560,7 +651,9 @@ git worktree list
 - 主仓库行标注「（主仓库）」；目录已丢失（prunable）的 worktree 标注「（目录已丢失）」
 - 无链接 worktree → 仅展示主仓库行，并提示「暂无链接 worktree，可通过创建动作新增」
 
-#### worktree 清理 步骤 1：主仓库检查
+#### worktree 清理
+
+##### 步骤 1：主仓库检查
 
 ```bash
 git rev-parse --git-dir
@@ -573,7 +666,7 @@ git rev-parse --git-common-dir
 - 两者不一致 → 当前位于链接 worktree 内，**中止**，正文提示：`清理必须在主仓库目录操作：cd <主仓库路径>`
 - 主仓库路径 = `--git-common-dir` 输出去除末尾 `/.git`
 
-#### worktree 清理 步骤 2：收集与有效性识别
+##### 步骤 2：收集与有效性识别
 
 ```bash
 git worktree list --porcelain
@@ -587,7 +680,7 @@ git worktree list --porcelain
 | 目录名与分支不一致 | 目录 basename ≠ `<仓库名>_<分支名去 type 前缀>` | 目录名 <实际> 不符合规范 <仓库名>_<slug> |
 | 目录已丢失 | porcelain 输出该 worktree 含 `prunable` | worktree 目录已不存在 |
 
-#### worktree 清理 步骤 3：多选清理目标
+##### 步骤 3：多选清理目标
 
 正文展示全量 worktree 列表：**无效项置顶并附原因**，有效项在后标注「有效」。随后 `AskUserQuestion`（`multiSelect: true`）：
 
@@ -596,11 +689,11 @@ git worktree list --porcelain
 
 > 无效仅代表不符合本命令的 worktree 规范或分支已失去远程对应，是否清理由勾选决定。
 
-#### worktree 清理 步骤 4：执行确认
+##### 步骤 4：执行确认
 
 正文列出勾选项及各自清理原因 → `AskUserQuestion`：确认清理 / 取消
 
-#### worktree 清理 步骤 5：执行
+##### 步骤 5：执行
 
 逐项：
 
@@ -614,7 +707,7 @@ git worktree remove <路径>
 git worktree prune
 ```
 
-#### worktree 清理 步骤 6：展示结果
+##### 步骤 6：展示结果
 
 ```
 ✅ Worktree 清理完成
@@ -647,5 +740,8 @@ git worktree prune
 | 目标目录已存在（worktree 创建） | 中止，提示清理旧目录或更名后重试 |
 | 本地分支已被其他 worktree 检出（worktree 创建） | 中止，提示先处理对应 worktree |
 | worktree add 执行失败（worktree 创建） | 展示命令错误输出，中止流程 |
+| 目标目录已存在（worktree 检出） | 中止，提示清理旧目录或更名后重试 |
+| 本地分支已被其他 worktree 检出（worktree 检出） | 中止，提示先处理对应 worktree |
+| worktree add 执行失败（worktree 检出） | 展示命令错误输出，中止流程 |
 | 在链接 worktree 内执行清理（worktree 清理） | 中止，提示 `cd <主仓库路径>` 后重试 |
 | worktree remove 失败：存在未提交变更或锁定（worktree 清理） | 展示错误输出，`AskUserQuestion`：`--force` 强制清理 / 取消 |
