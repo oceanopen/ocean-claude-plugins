@@ -17,6 +17,11 @@
       "name": "ocean-office",
       "source": "./plugins/ocean-office-plugin",
       "description": "办公效率插件，提供 HTML 演示文稿制作等办公技能"
+    },
+    {
+      "name": "ocean-harness",
+      "source": "./plugins/ocean-harness-plugin",
+      "description": "基于 ocean-harness 客户端应用自带 CLI 封装的插件"
     }
   ]
 }

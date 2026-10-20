@@ -62,6 +62,7 @@ claude
 | --- | --- | --- |
 | [ocean-code](plugins/ocean-code-plugin/) | 研发辅助插件，提供代码审查、规范检查、文档生成等编程技能，提升日常开发效率 | 可用 |
 | [ocean-office](plugins/ocean-office-plugin/) | 办公效率插件，提供 HTML 演示文稿制作等办公技能 | 可用 |
+| [ocean-harness](plugins/ocean-harness-plugin/) | 基于 ocean-harness 客户端应用自带 CLI 封装的插件 | 可用 |
 
 > 插件位于 `plugins/` 目录下，每个子目录为一个独立插件。
 
