@@ -1,7 +1,7 @@
 ---
 allowed-tools: AskUserQuestion, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git fetch:*), Bash(git branch:*), Bash(git checkout:*), Bash(git check-ref-format:*), Bash(git push:*), Bash(git pull:*), Bash(git remote:*), Bash(git rev-parse:*), Bash(git worktree:*), Bash(git ls-remote:*), Bash(git for-each-ref:*), Bash(ls:*), Bash(cd:*), Bash(gh:*), Read, Glob, Grep, Skill
-argument-hint: [branch <name> [base] | pr [补充说明] | merge [PR链接] | worktree [功能描述|远程分支名]]
-description: 零记忆 GitHub 工作流：交互引导创建远程分支并本地跟踪检出、生成并创建 PR、合并 PR 并删除远程分支、创建/检出/查看和清理 worktree，参数一律经选项确认
+argument-hint: [branch <name> [base] | pr_merge [补充说明|PR链接] | worktree [功能描述|远程分支名]]
+description: 零记忆 GitHub 工作流：交互引导创建远程分支并本地跟踪检出、创建 PR 并按需合并或对已有 PR 合并、创建/检出/查看和清理 worktree（含本地分支），参数一律经选项确认
 skills: skill-git-commit, skill-cmd-echo
 ---
 
@@ -9,15 +9,14 @@ skills: skill-git-commit, skill-cmd-echo
 
 # /ocean-code:github
 
-基于 gh CLI 的 GitHub 工作流命令，包含四个子动作：**branch**（创建远程分支并本地跟踪检出）、**pr**（生成 PR 标题/描述并创建）、**merge**（合并 PR 并删除分支）、**worktree**（在主仓库父目录创建 worktree 并新建远程分支跟踪检出，或检出已有远程分支到新 worktree，或查看、清理 worktree）。子命令可直接识别，子命令的参数一律经选项确认后才执行。
+基于 gh CLI 的 GitHub 工作流命令，包含三个子动作：**branch**（创建远程分支并本地跟踪检出）、**pr_merge**（创建 PR 并按需继续合并，或对已有 PR 执行合并）、**worktree**（在主仓库父目录创建 worktree 并新建远程分支跟踪检出，或检出已有远程分支到新 worktree，或查看、清理 worktree——清理连同本地分支一并删除）。子命令可直接识别，子命令的参数一律经选项确认后才执行。
 
 ## 核心功能
 
-1. **子命令路由**：裸调用或首个参数无法识别时，通过 `AskUserQuestion` 选择子命令；首个参数为 branch / pr / merge / worktree 时直接识别
+1. **子命令路由**：裸调用或首个参数无法识别时，通过 `AskUserQuestion` 选择子命令；首个参数为 branch / pr_merge / worktree 时直接识别
 2. **branch**：从远程默认分支（或指定起点）的最新远程引用创建远程分支，本地 `checkout -t` 跟踪检出——不经本地分支，不受本地落后影响
-3. **pr**：基于提交与变更分析生成 PR 标题与描述，正文预览确认后创建
-4. **merge**：拉取开放 PR 列表供选择，按选定策略合并并删除远程分支，合并后对齐本地默认分支
-5. **worktree**：按功能描述生成 slug，在主仓库父目录创建 `{仓库名}_{slug}` worktree 并新建远程分支跟踪检出；或选择已有远程分支，自动推导目录名（`{仓库名}_{分支名去 type 前缀}`）创建 worktree 并跟踪检出；或列出全部 worktree 的目录与当前分支；或自动识别无效项（远程分支不存在 / 目录名与分支不一致 / 目录已丢失）供多选清理
+3. **pr_merge**：入口选择「创建 PR / 已有 PR 执行合并」——创建流程基于提交与变更分析生成 PR 标题与描述，正文预览确认后创建，创建完成追问是否继续合并；合并流程拉取开放 PR 列表供选择（或直接使用刚创建的 PR），按选定策略合并并删除远程分支，合并后对齐本地默认分支
+4. **worktree**：按功能描述生成 slug，在主仓库父目录创建 `{仓库名}_{slug}` worktree 并新建远程分支跟踪检出；或选择已有远程分支，自动推导目录名（`{仓库名}_{分支名去 type 前缀}`）创建 worktree 并跟踪检出；或列出全部 worktree 的目录与当前分支；或自动识别无效项（远程分支不存在 / 目录名与分支不一致 / 目录已丢失）供多选清理，清理时连同本地分支一并删除
 
 ## 零记忆交互契约
 
@@ -25,9 +24,9 @@ skills: skill-git-commit, skill-cmd-echo
 
 ### 子命令识别
 
-- 裸调用（无 `$ARGUMENTS`）→ `AskUserQuestion` 单选子命令：branch / pr / merge / worktree
-- 首个参数为 `branch` / `pr` / `merge` / `worktree` → 直接识别，跳过子命令选择，其余参数视为该子命令的**待确认参数**（worktree 的其余参数视为功能描述；命中已有远程分支时进入检出流程）
-- 首个参数无法识别 → 视同裸调用，通过 `AskUserQuestion` 选择子命令
+- 裸调用（无 `$ARGUMENTS`）→ `AskUserQuestion` 单选子命令：branch / pr_merge / worktree
+- 首个参数为 `branch` / `pr_merge` / `worktree` → 直接识别，跳过子命令选择，其余参数视为该子命令的**待确认参数**（pr_merge 的其余参数按入口消歧规则处理：解析为 PR 链接/纯编号 → 合并流程，其余 → 创建流程的补充说明；worktree 的其余参数视为功能描述；命中已有远程分支时进入检出流程）
+- 首个参数无法识别（含已废弃的 `pr`、`merge`）→ 视同裸调用，通过 `AskUserQuestion` 选择子命令
 
 ### 参数确认铁律
 
@@ -42,9 +41,9 @@ skills: skill-git-commit, skill-cmd-echo
 
 | 参数 | 候选来源 |
 |---|---|
-| branch 起点 / pr 目标分支 | `gh repo view` 远程默认分支（推荐项）+ `git branch -r` 近期远程分支 |
+| branch 起点 / pr_merge 创建目标分支 | `gh repo view` 远程默认分支（推荐项）+ `git branch -r` 近期远程分支 |
 | branch 分支名 | 最近提交主题衍生的 kebab-case 候选名（去除 type 前缀） |
-| merge PR | 已输入链接解析编号后经 `gh pr view` 校验；未输入则 `gh pr list` 开放 PR 列表 |
+| pr_merge 合并 PR | 已输入参数解析编号后经 `gh pr view` 校验；从创建流程衔接进入时直接使用刚创建的 PR，跳过选择；未输入则 `gh pr list` 开放 PR 列表 |
 | worktree 功能描述 / slug | 最近提交主题衍生的 slug 候选（去除 type 前缀）；用户经 `Other` 输入中文/英文描述时由翻译生成 |
 | worktree 检出分支 | 已输入参数校验命中远程分支（`git branch -r --list origin/<参数>` 非空）；`git for-each-ref refs/remotes/origin --sort=-committerdate --format=%(refname:short) --count=10` 近期远程分支 |
 | worktree 清理目标 | `git worktree list` 链接 worktree 全量列表，无效项置顶并附原因 |
@@ -56,11 +55,11 @@ skills: skill-git-commit, skill-cmd-echo
 | 子动作 | 参数确认 | 执行确认 |
 |---|---|---|
 | branch | 分支名 + 起点（+ 未提交变更处理） | 无独立预览；仅远程同名分支已存在时追问 |
-| pr | 目标分支 + 补充说明 | 正文预览 → 确认创建 / 修改内容 / 取消 |
-| merge | 选择 PR + 合并策略 | 正文 PR 概要 → 确认合并 / 取消 |
+| pr_merge 创建 | 目标分支 + 补充说明 | 正文预览 → 确认创建 / 修改内容 / 取消；创建后追问是否继续合并 |
+| pr_merge 合并 | 选择 PR（已输入/创建衔接场景已定，仅确认合并策略）+ 合并策略 | 正文 PR 概要 → 确认合并 / 取消 |
 | worktree 创建 | 功能描述 slug + type 前缀 + 分支名 + 目录名 + 起点（分两轮：轮 1 功能描述 → slug，轮 2 其余四项） | 无独立预览；目录已存在 / 分支冲突时追问 |
 | worktree 检出 | 分支选择 + 目录名（一轮 ≤2 问：目录名由分支名去 type 前缀自动推导，可改） | 无独立预览；目录已存在 / 分支已被其他 worktree 检出时中止 |
-| worktree 清理 | 多选清理目标（无效项置顶附原因） | 正文清理范围与原因 → 确认清理 / 取消 |
+| worktree 清理 | 多选清理目标（无效项置顶附原因） | 正文清理范围（含将删除的本地分支）与原因 → 确认清理 / 取消 |
 | worktree 查看 | 无参数（只读） | 无（点击后直接展示列表） |
 
 ## 使用方法
@@ -77,8 +76,7 @@ skills: skill-git-commit, skill-cmd-echo
 
 ```bash
 /ocean-code:github branch
-/ocean-code:github pr
-/ocean-code:github merge
+/ocean-code:github pr_merge
 /ocean-code:github worktree
 ```
 
@@ -89,8 +87,8 @@ skills: skill-git-commit, skill-cmd-echo
 ```bash
 /ocean-code:github branch fix/login-validation
 /ocean-code:github branch fix/login-validation origin/release-1.2
-/ocean-code:github pr 补充登录校验修复的背景说明
-/ocean-code:github merge https://github.com/<owner>/<repo>/pull/42
+/ocean-code:github pr_merge 补充登录校验修复的背景说明
+/ocean-code:github pr_merge https://github.com/<owner>/<repo>/pull/42
 /ocean-code:github worktree 新增 worktree 子命令
 ```
 
@@ -138,10 +136,9 @@ gh auth status
 解析 `$ARGUMENTS`：
 
 - 首个参数为 `branch` → 子动作 branch，其余参数依序为 `<name> [base]`
-- 首个参数为 `pr` → 子动作 pr，其余参数合并为补充说明
-- 首个参数为 `merge` → 子动作 merge，其余参数为 PR 编号
+- 首个参数为 `pr_merge` → 子动作 pr_merge，其余参数按入口消歧规则处理：解析为 PR 链接（`.../pull/<编号>`）或纯编号 → 直入合并流程（编号待校验）；其余文本 → 视为补充说明直入创建流程
 - 首个参数为 `worktree` → 子动作 worktree，其余参数合并为功能描述；先 `git fetch origin` 再校验（`git branch -r --list origin/<参数>` 非空），命中已有远程分支 → 进入检出流程，未命中 → 视为功能描述
-- 无参数或无法识别 → `AskUserQuestion` 单选子命令（branch：创建远程分支并检出 / pr：创建 PR / merge：合并 PR / worktree：创建/检出/查看/清理 worktree），选定后进入对应子动作
+- 无参数或无法识别 → `AskUserQuestion` 单选子命令（branch：创建远程分支并检出 / pr_merge：创建 PR 并按需合并 / worktree：创建/检出/查看/清理 worktree），选定后进入对应子动作
 
 ### 子动作 branch：创建远程分支并本地跟踪检出
 
@@ -215,9 +212,23 @@ git checkout -t origin/<name>
 本地分支：<name>（跟踪 origin/<name>）
 ```
 
-### 子动作 pr：生成标题/描述并创建 PR
+### 子动作 pr_merge：创建 PR 并按需合并，或对已有 PR 执行合并
 
-#### pr 步骤 1：前置校验与候选收集
+#### 入口分流
+
+未输入参数 → `AskUserQuestion` 单选：
+
+- **创建 PR（推荐）**：进入创建流程（创建步骤 1）
+- **已有 PR 执行合并**：进入合并流程（合并步骤 1）
+
+已输入参数 → 按路由消歧结果直入对应流程，跳过入口询问：
+
+- 参数解析为 PR 链接（`.../pull/<编号>`）或纯编号 → 进入合并流程（合并步骤 1），编号作为已输入 PR 待校验
+- 其余文本 → 进入创建流程（创建步骤 1），参数作为已输入补充说明
+
+#### 创建流程：生成标题/描述并创建 PR
+
+##### 创建步骤 1：前置校验与候选收集
 
 ```bash
 gh repo view --json defaultBranchRef --jq .defaultBranchRef.name
@@ -255,14 +266,14 @@ gh pr view --json number,url
 - 命令失败（无关联 PR）属预期控制流，继续后续流程
 - 当前分支已存在关联 PR → 中止，展示既有 PR 链接
 
-#### pr 步骤 2：参数确认（一次 `AskUserQuestion`）
+##### 创建步骤 2：参数确认（一次 `AskUserQuestion`）
 
 | 问题 | 选项构成 |
 |---|---|
 | ① 目标分支 base | 已输入值标注「已输入」置首；未输入则 `origin/<默认分支>(推荐)` 置首 + 近期远程分支候选；`Other` 自由输入 |
 | ② 补充说明 | 已输入 → 「使用「<补充说明>」」标注「已输入」置首 + 「不使用补充说明」；未输入 → 「基于变更分析自动生成(推荐)」置首 + 「不使用补充说明」；`Other` 输入新说明 |
 
-#### pr 步骤 3：分析变更生成标题与描述
+##### 创建步骤 3：分析变更生成标题与描述
 
 ```bash
 git log origin/<base>..HEAD --oneline
@@ -275,7 +286,7 @@ git diff origin/<base>...HEAD
 - 标题：按 skill-git-commit 规范生成 `type(scope): subject`
 - 描述：变更总结 + 要点列表；补充说明（若有）融入描述开头作为背景
 
-#### pr 步骤 4：正文预览
+##### 创建步骤 4：正文预览
 
 > ⚠️ 多行内容以正文输出，禁止并入下一步 `AskUserQuestion`。
 
@@ -293,21 +304,21 @@ git diff origin/<base>...HEAD
 - <hash> <subject>
 ```
 
-#### pr 步骤 5：确认创建
+##### 创建步骤 5：确认创建
 
 `AskUserQuestion`：
 
-- ✅ 确认创建 → 执行 pr 步骤 6
-- ✏️ 修改内容 → 按反馈调整标题/描述后回到 pr 步骤 4 重新预览
+- ✅ 确认创建 → 执行创建步骤 6
+- ✏️ 修改内容 → 按反馈调整标题/描述后回到创建步骤 4 重新预览
 - ❌ 取消 → 中止流程
 
-#### pr 步骤 6：执行创建
+##### 创建步骤 6：执行创建
 
 ```bash
 gh pr create --title "<标题>" --body "<描述>" --base "<base>"
 ```
 
-#### pr 步骤 7：展示结果
+##### 创建步骤 7：展示结果
 
 ```
 ✅ PR 创建成功
@@ -316,14 +327,22 @@ PR：<PR URL>
 目标：origin/<base> ← <当前分支>
 ```
 
-### 子动作 merge：合并 PR 并删除分支
+##### 创建步骤 8：衔接合并询问
 
-#### merge 步骤 1：定位 PR
+PR 创建完成后 `AskUserQuestion`：
 
-已输入 PR 链接时先解析编号再校验：
+- ✅ 立即合并 → 携带刚创建的 PR 进入合并流程，跳过 PR 选择，直接进入合并步骤 2（仅确认合并策略）
+- 暂不合并 → 流程结束
 
-- 从链接末段提取 PR 编号：`.../pull/<编号>`；解析失败（非 PR 链接格式）→ 正文提示「无法从输入中识别 PR 链接」，**当作未输入处理**，回落到列表选择
-- 纯数字输入 → 兼容视为编号，直接进入校验
+#### 合并流程：合并 PR 并删除分支
+
+##### 合并步骤 1：定位 PR
+
+从创建流程衔接进入 → PR 已定（刚创建的 PR），跳过本步骤直接进入合并步骤 2。
+
+已输入参数（经入口消歧直入合并流程）时先校验：
+
+- 从链接末段提取 PR 编号：`.../pull/<编号>`；纯数字输入 → 兼容视为编号；解析失败（非 PR 链接格式且非纯编号，仅在 `Other` 自由输入场景可能出现）→ 正文提示「无法从输入中识别 PR 链接」，**当作未输入处理**，回落到列表选择
 
 ```bash
 gh pr view <编号> --json number,title,state,headRefName,baseRefName
@@ -341,7 +360,9 @@ gh pr list --limit 10 --json number,title,headRefName,baseRefName,updatedAt
 - 正文展示 PR 列表（最多 10 个：编号 / 标题 / head→base / 更新时间）
 - 当前分支关联 PR 若在列表中 → 该 PR 置首，标注「当前分支」
 
-#### merge 步骤 2：参数确认（一次 `AskUserQuestion`）
+##### 合并步骤 2：参数确认（一次 `AskUserQuestion`）
+
+PR 已定（创建衔接 / 已输入校验通过）时仅确认合并策略，跳过选择 PR 问题。
 
 | 问题 | 选项构成 |
 |---|---|
@@ -350,7 +371,7 @@ gh pr list --limit 10 --json number,title,headRefName,baseRefName,updatedAt
 
 > 正文列表最多展示 10 个 PR；`AskUserQuestion` 单题选项上限 4 个，未进入选项的 PR 通过 `Other` 输入链接或编号选择。
 
-#### merge 步骤 3：正文 PR 概要
+##### 合并步骤 3：正文 PR 概要
 
 ```bash
 gh pr view <编号> --json number,title,url,headRefName,baseRefName,mergeable,isDraft,statusCheckRollup,commits
@@ -372,14 +393,14 @@ CI 状态：<全部通过 / 未通过（详列失败项）/ 进行中>
 - CI 未通过或草稿状态 → 概要正文**明确警示**：CI 失败由用户在下一步确认中自行决定；草稿 PR 会被 gh 拒绝合并，提示先执行 `gh pr ready`
 - `mergeable` 为 CONFLICTING → 中止，提示先解决冲突
 
-#### merge 步骤 4：确认合并
+##### 合并步骤 4：确认合并
 
 `AskUserQuestion`：
 
-- ✅ 确认合并 → 执行 merge 步骤 5
+- ✅ 确认合并 → 执行合并步骤 5
 - ❌ 取消 → 中止流程
 
-#### merge 步骤 5：执行合并
+##### 合并步骤 5：执行合并
 
 ```bash
 gh pr merge <编号> --squash --delete-branch
@@ -389,7 +410,7 @@ gh pr merge <编号> --squash --delete-branch
 
 gh 将合并 PR、删除远程分支、本地切回默认分支并删除本地对应分支。
 
-#### merge 步骤 6：对齐本地默认分支
+##### 合并步骤 6：对齐本地默认分支
 
 gh 仅在「当前分支 = PR head 分支」时才自动切回默认分支，按当前分支状态执行：
 
@@ -409,7 +430,7 @@ git checkout <默认分支>
 git pull
 ```
 
-#### merge 步骤 7：展示结果
+##### 合并步骤 7：展示结果
 
 ```
 ✅ PR 合并完成
@@ -541,7 +562,7 @@ Worktree：<绝对路径>
 
 后续提交与 PR 操作请在本 worktree 目录下进行：
 - 提交：/ocean-code:git-commit
-- 创建 PR：/ocean-code:github pr
+- 创建并合并 PR：/ocean-code:github pr_merge
 ```
 
 #### worktree 检出
@@ -625,7 +646,7 @@ Worktree：<绝对路径>
 
 后续提交与 PR 操作请在本 worktree 目录下进行：
 - 提交：/ocean-code:git-commit
-- 创建 PR：/ocean-code:github pr
+- 创建并合并 PR：/ocean-code:github pr_merge
 ```
 
 #### worktree 查看
@@ -672,7 +693,7 @@ git rev-parse --git-common-dir
 git worktree list --porcelain
 ```
 
-对每个链接 worktree（排除主仓库行）自动判定**可清理（无效）**并生成原因：
+对每个链接 worktree（排除主仓库行）记录其检出分支（porcelain 输出的 `branch` 字段），并自动判定**可清理（无效）**并生成原因：
 
 | 判定 | 方法 | 原因描述 |
 |---|---|---|
@@ -691,21 +712,35 @@ git worktree list --porcelain
 
 ##### 步骤 4：执行确认
 
-正文列出勾选项及各自清理原因 → `AskUserQuestion`：确认清理 / 取消
+正文列出勾选项及各自清理原因与**将删除的本地分支**（porcelain 输出无 branch 字段的项仅列 worktree）→ `AskUserQuestion`：确认清理 / 取消
 
 ##### 步骤 5：执行
 
-逐项：
+逐项移除 worktree（目录已丢失的 prunable 项 remove 会报错，跳过，由下一步 prune 回收）：
 
 ```bash
 git worktree remove <路径>
 ```
 
-全部完成后：
+全部移除后回收失效登记——含 prunable 项，同时释放其检出分支的占用（分支删除必须在本步之后，否则被占用的分支无法删除）：
 
 ```bash
 git worktree prune
 ```
+
+最后逐项删除本地分支（先确认分支存在）：
+
+```bash
+git branch --list <分支名>
+```
+
+- 输出非空 → 执行删除：
+
+```bash
+git branch -D <分支名>
+```
+
+> 强制删除：清理场景多为远程分支已删（如 squash 合并后），`-d` 的祖先判定不成立会被拒绝。分支不存在（从未在本地创建）或仍被主仓库/其他 worktree 检出导致删除失败时，报告该项并跳过，不中断其余清理项。
 
 ##### 步骤 6：展示结果
 
@@ -714,8 +749,10 @@ git worktree prune
 
 已清理：
 - <路径>（<原因>）
+- 本地分支 <分支名>：已删除
 
-本地分支未删除；如需删除，走 /ocean-code:github merge 流程或手动 git branch -d
+本地分支删除跳过（如有）：
+- <分支名>（<原因：分支不存在 / 被主仓库或其他 worktree 检出>）
 ```
 
 ## 错误处理
@@ -728,14 +765,14 @@ git worktree prune
 | 远程同名分支已存在（branch） | `AskUserQuestion`：检出既有分支 / 中止 |
 | 本地同名分支已存在（branch） | 中止，提示处理本地同名分支后重试 |
 | 工作区有未提交变更（branch） | 并入参数确认：带变更继续 / 中止 |
-| 当前分支为默认分支（pr） | `AskUserQuestion`：继续（如发布流程）/ 中止 |
-| 分支未推送 / 有未推送提交（pr） | `AskUserQuestion`：推送后继续 / 中止 |
-| 当前分支已存在关联 PR（pr） | 中止，展示既有 PR 链接 |
-| 已输入 PR 链接无法解析或编号无效（merge） | 正文提示，当作未输入处理，回落 PR 列表选择 |
-| 无开放 PR（merge） | 中止，提示先通过 pr 子动作创建 |
-| CI 未通过（merge） | 概要正文警示，由用户在确认时决定 |
-| PR 为草稿（merge） | 概要正文警示，提示先执行 `gh pr ready` |
-| 存在合并冲突（merge） | 中止，提示先解决冲突 |
+| 当前分支为默认分支（pr_merge 创建） | `AskUserQuestion`：继续（如发布流程）/ 中止 |
+| 分支未推送 / 有未推送提交（pr_merge 创建） | `AskUserQuestion`：推送后继续 / 中止 |
+| 当前分支已存在关联 PR（pr_merge 创建） | 中止，展示既有 PR 链接（可改走合并流程） |
+| 已输入 PR 链接无法解析或编号无效（pr_merge 合并） | 正文提示，当作未输入处理，回落 PR 列表选择 |
+| 无开放 PR（pr_merge 合并） | 中止，提示改走创建流程 |
+| CI 未通过（pr_merge 合并） | 概要正文警示，由用户在确认时决定 |
+| PR 为草稿（pr_merge 合并） | 概要正文警示，提示先执行 `gh pr ready` |
+| 存在合并冲突（pr_merge 合并） | 中止，提示先解决冲突 |
 | push / pr create / pr merge 执行失败 | 展示命令错误输出，中止流程 |
 | 目标目录已存在（worktree 创建） | 中止，提示清理旧目录或更名后重试 |
 | 本地分支已被其他 worktree 检出（worktree 创建） | 中止，提示先处理对应 worktree |
@@ -745,3 +782,4 @@ git worktree prune
 | worktree add 执行失败（worktree 检出） | 展示命令错误输出，中止流程 |
 | 在链接 worktree 内执行清理（worktree 清理） | 中止，提示 `cd <主仓库路径>` 后重试 |
 | worktree remove 失败：存在未提交变更或锁定（worktree 清理） | 展示错误输出，`AskUserQuestion`：`--force` 强制清理 / 取消 |
+| 本地分支删除失败（worktree 清理） | 展示错误输出，跳过该项继续其余清理，完成后在结果中列出 |
