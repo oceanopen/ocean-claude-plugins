@@ -768,9 +768,28 @@ git worktree list --porcelain
 
 | 判定 | 方法 | 原因描述 |
 |---|---|---|
-| 远程分支不存在 | `git ls-remote --heads origin <分支名>` 输出为空 | 远程分支 origin/<分支名> 不存在（已删除或从未推送） |
+| 远程分支不存在 | `git ls-remote --heads origin <分支名>` 输出为空 | 远程分支 origin/<分支名> 不存在（<合并状态核实结果>，见下） |
 | 目录名与分支不一致 | 目录 basename ≠ `<仓库名>_<分支名去 type 前缀>` | 目录名 <实际> 不符合规范 <仓库名>_<slug> |
 | 目录已丢失 | porcelain 输出该 worktree 含 `prunable` | worktree 目录已不存在 |
+
+对「远程分支不存在」项，逐项核实本地分支内容的合并状态（porcelain 无 `branch` 字段的项跳过核实；默认分支名经 `gh repo view --json defaultBranchRef --jq .defaultBranchRef.name` 获取一次）：
+
+```bash
+git rev-list --count <默认分支>..<本地分支>
+```
+
+- 为 0 → 原因标注：远程分支 origin/<分支名> 不存在（内容已合入 <默认分支>）
+
+计数 > 0 → 查是否存在已合并 PR：
+
+```bash
+gh pr list --head <本地分支> --state merged --limit 1 --json number,mergeCommit
+```
+
+- 命中 → 原因标注：远程分支 origin/<分支名> 不存在（PR #<编号> 已 squash 合入 <默认分支>，squash 后原提交不在祖先中属正常）
+- 未命中 → 原因标注 ⚠️：远程分支 origin/<分支名> 不存在，本地分支含 <N> 个未合并提交，删除后不可常规找回
+
+> squash 合并生成新提交，原提交不在 <默认分支> 祖先中，祖先判定（rev-list）天然不识别——以 gh 已合并 PR 为准；本地 <默认分支> 落后导致的误计数同样由该核实兜底。
 
 ##### 步骤 3：多选清理目标
 
@@ -783,15 +802,36 @@ git worktree list --porcelain
 
 ##### 步骤 4：执行确认
 
-正文列出勾选项及各自清理原因与**将删除的本地分支**（porcelain 输出无 branch 字段的项仅列 worktree）→ `AskUserQuestion`：确认清理 / 取消
+对每个勾选项预检目录状态，记录为该项的处置方式：
+
+```bash
+git -C <路径> status --porcelain
+```
+
+- 命令失败 → 「物理删除目录」（git 关联已断）
+- 输出为空 → 「正常移除」
+- 仅 `??` 行 → 「强制移除（--force）」（未跟踪产物）
+- 含非 `??` 行 → 「强制移除（--force）」，并列出修改文件（数据风险）
+
+正文列出勾选项及各自清理原因、处置方式与**将删除的本地分支**（porcelain 输出无 branch 字段的项仅列 worktree）→ `AskUserQuestion`：确认清理 / 取消。处置方式（含强制移除与物理删除）由本次确认一次性覆盖，执行阶段不再中途询问
 
 ##### 步骤 5：执行
 
-逐项移除 worktree（目录已丢失的 prunable 项 remove 会报错，跳过，由下一步 prune 回收）：
+逐项按步骤 4 预检的处置方式移除 worktree（目录已丢失的 prunable 项跳过 remove，由下一步 prune 回收）：
+
+1. 处置方式为「正常移除 / 强制移除」且登记仍在（`git worktree list` 含该项）→ 移除，强制项带 `--force`：
 
 ```bash
 git worktree remove <路径>
 ```
+
+2. remove 失败（含 `--force`，典型为编辑器 LSP / 文件监视进程并发写入目录，失败形态可能是「半完成」：登记已摘、目录残留）或登记已不在 → 物理删除目录（本就在已确认范围内，机械执行，不再询问）：
+
+```bash
+rm -rf <路径>
+```
+
+3. `rm -rf` 失败（进程仍在持续写入）→ 数秒后重试一次；仍失败 → 列出残留文件与占用进程线索（`lsof +D <路径>`），`AskUserQuestion`：重试删除（推荐，可先关闭占用该目录的编辑器窗口）/ 中止保留该项目录
 
 全部移除后回收失效登记——含 prunable 项，同时释放其检出分支的占用（分支删除必须在本步之后，否则被占用的分支无法删除）：
 
@@ -852,5 +892,6 @@ git branch -D <分支名>
 | 本地分支已被其他 worktree 检出（worktree 检出） | 中止，提示先处理对应 worktree |
 | worktree add 执行失败（worktree 检出） | 展示命令错误输出，中止流程 |
 | 在链接 worktree 内执行清理（worktree 清理） | 中止，提示 `cd <主仓库路径>` 后重试 |
-| worktree remove 失败：存在未提交变更或锁定（worktree 清理） | 展示错误输出，`AskUserQuestion`：`--force` 强制清理 / 取消 |
+| worktree remove 失败或登记已失效（worktree 清理） | 物理删除目录（`rm -rf`）后 prune；已在确认范围，不重复询问 |
+| rm -rf 重试仍失败：进程持续占用目录（worktree 清理） | 列出残留文件与占用进程，`AskUserQuestion`：重试删除 / 中止保留目录 |
 | 本地分支删除失败（worktree 清理） | 展示错误输出，跳过该项继续其余清理，完成后在结果中列出 |
