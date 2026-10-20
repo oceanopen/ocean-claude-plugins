@@ -1,5 +1,5 @@
 ---
-allowed-tools: Agent, AskUserQuestion, Read, Glob, Grep, Skill, Bash, Write, Edit, TaskCreate, TaskUpdate
+allowed-tools: Agent, AskUserQuestion, Read, Glob, Grep, Skill, Bash, Write, Edit
 argument-hint: 需求描述或需求文档路径
 description: 需求任务拆分，基于源码上下文澄清需求并拆分子任务，生成可状态跟进的任务文档
 skills: skill-task-split, skill-cmd-echo
@@ -37,7 +37,7 @@ skills: skill-task-split, skill-cmd-echo
 - **禁止接受纯文本回复作为确认信号**：用户纯文本回"确认"时，再次调用 `AskUserQuestion` 让其点选
 - **长内容正文先行**：任务文档全文等长内容必须先以正文完整输出，再用 `AskUserQuestion` 问短问题
 - **落盘前必须获得「确认落盘」点选**：循环呈现与调整，用户点选「确认落盘」后才执行任何文件写入
-- **使用 TaskCreate 跟踪进度**：全程跟踪各阶段进展
+- **进度跟踪**：全程跟踪各阶段进展。环境提供任务跟踪类工具（创建/更新任务条目的内建工具）→ 直接试调使用；未提供或调用报错 → 在回复正文维护「进度清单」小节（每阶段一行，标注 待办/进行中/完成），不解释工具缺失原因
 
 ## 执行流程
 
