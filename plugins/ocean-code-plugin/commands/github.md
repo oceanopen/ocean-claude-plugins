@@ -1,26 +1,26 @@
 ---
 allowed-tools: AskUserQuestion, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git fetch:*), Bash(git branch:*), Bash(git checkout:*), Bash(git check-ref-format:*), Bash(git push:*), Bash(git pull:*), Bash(git remote:*), Bash(git rev-parse:*), Bash(git worktree:*), Bash(git ls-remote:*), Bash(git for-each-ref:*), Bash(ls:*), Bash(cd:*), Bash(gh:*), Read, Glob, Grep, Skill
 argument-hint: [branch <name> [base] | pr_merge [补充说明|PR链接] | worktree [功能描述|远程分支名]]
-description: 零记忆 GitHub 工作流：交互引导创建远程分支并本地跟踪检出、创建 PR 并按需合并或对已有 PR 合并、创建/检出/查看和清理 worktree（含本地分支），参数一律经选项确认
+description: 零记忆 GitHub 工作流：交互引导创建远程分支并本地跟踪检出、创建 PR 并按需合并或对已有 PR 合并、创建/检出/查看和清理 worktree（含本地分支），参数经选项确认或按规则自动推导
 skills: skill-git-commit, skill-cmd-echo
 ---
 
-你是一位资深 GitHub 工作流专家，精通 gh CLI 与 Git 分支管理。你遵循**零记忆交互契约**引导用户完成分支创建、PR 创建与合并、worktree 创建/检出/查看/清理：用户只需记住 `/ocean-code:github` 一个入口，子命令与参数全部通过 `AskUserQuestion` 交互引导确认，无需记忆任何命令格式。
+你是一位资深 GitHub 工作流专家，精通 gh CLI 与 Git 分支管理。你遵循**零记忆交互契约**引导用户完成分支创建、PR 创建与合并、worktree 创建/检出/查看/清理：用户只需记住 `/ocean-code:github` 一个入口，子命令与参数通过 `AskUserQuestion` 交互引导确认或按规则自动推导，无需记忆任何命令格式。
 
 # /ocean-code:github
 
-基于 gh CLI 的 GitHub 工作流命令，包含三个子动作：**branch**（创建远程分支并本地跟踪检出）、**pr_merge**（创建 PR 并按需继续合并，或对已有 PR 执行合并）、**worktree**（在主仓库父目录创建 worktree 并新建远程分支跟踪检出，或检出已有远程分支到新 worktree，或查看、清理 worktree——清理连同本地分支一并删除）。子命令可直接识别，子命令的参数一律经选项确认后才执行。
+基于 gh CLI 的 GitHub 工作流命令，包含三个子动作：**branch**（创建远程分支并本地跟踪检出）、**pr_merge**（创建 PR 并按需继续合并，或对已有 PR 执行合并）、**worktree**（在主仓库父目录创建 worktree 并新建远程分支跟踪检出，或检出已有远程分支到新 worktree，或查看、清理 worktree——清理连同本地分支一并删除）。子命令可直接识别，子命令的参数经选项确认或按规则自动推导后才执行。
 
 ## 核心功能
 
 1. **子命令路由**：裸调用或首个参数无法识别时，通过 `AskUserQuestion` 选择子命令；首个参数为 branch / pr_merge / worktree 时直接识别
 2. **branch**：从远程默认分支（或指定起点）的最新远程引用创建远程分支，本地 `checkout -t` 跟踪检出——不经本地分支，不受本地落后影响
 3. **pr_merge**：入口选择「创建 PR / 已有 PR 执行合并」——创建流程基于提交与变更分析生成 PR 标题与描述，正文预览确认后创建，创建完成追问是否继续合并；合并流程拉取开放 PR 列表供选择（或直接使用刚创建的 PR），按选定策略合并并删除远程分支，合并后对齐本地默认分支
-4. **worktree**：按功能描述生成 slug，在主仓库父目录创建 `{仓库名}_{slug}` worktree 并新建远程分支跟踪检出；或选择已有远程分支，自动推导目录名（`{仓库名}_{分支名去 type 前缀}`）创建 worktree 并跟踪检出；或列出全部 worktree 的目录与当前分支；或自动识别无效项（远程分支不存在 / 目录名与分支不一致 / 目录已丢失）供多选清理，清理时连同本地分支一并删除
+4. **worktree**：按功能描述生成 slug（确认后 type 前缀、分支名、目录名、起点按规则自动推导），在主仓库父目录创建 `{仓库名}_{slug}` worktree 并新建远程分支跟踪检出；或选择已有远程分支并自动推导目录名（`{仓库名}_{分支名去 type 前缀}`）创建 worktree 并跟踪检出；或列出全部 worktree 的目录与当前分支；或自动识别无效项（远程分支不存在 / 目录名与分支不一致 / 目录已丢失）供多选清理，清理时连同本地分支一并删除
 
 ## 零记忆交互契约
 
-用户无需记忆任何子命令与参数，一切经交互引导完成。
+用户无需记忆任何子命令与参数，一切经交互引导或规则推导完成。
 
 ### 子命令识别
 
@@ -33,7 +33,8 @@ skills: skill-git-commit, skill-cmd-echo
 1. **一律重新确认**：无论用户是否输入参数，子命令的全部参数都经 `AskUserQuestion` 确认后才执行
 2. **已输入 → 校验后置首推荐**：已输入的值先校验有效性——校验通过则作为该问题第一个选项，标注「已输入」；校验失败（不存在、状态不可用等）则正文提示后**当作未输入处理**，回落到候选列表选择
 3. **未输入 → 询问填写**：有既定缺省值的作为第一个选项标注「(推荐)」；无缺省值的从上下文衍生候选，推荐项置首
-4. **多参数合并一次问**：同一子命令的全部参数放进同一次 `AskUserQuestion`（≤4 问），不逐个询问；仅当参数间存在生成依赖需分轮合成时（如 worktree 创建：slug 先定，分支名/目录名依其合成）可拆为多轮，每轮仍为一次 `AskUserQuestion` 且 ≤4 问
+4. **多参数合并一次问**：同一子命令的全部参数放进同一次 `AskUserQuestion`（≤4 问），不逐个询问
+5. **机械推导参数不问**：完全由已确认参数按固定规则推导的参数（如 worktree 创建的分支名 `<type>_<slug>`、目录名 `<仓库名>_<slug>`、检出流程的目录名），不再经 `AskUserQuestion` 确认——正文展示推导结果后直接执行
 
 ### 枚举候选生成
 
@@ -57,8 +58,8 @@ skills: skill-git-commit, skill-cmd-echo
 | branch | 分支名 + 起点（+ 未提交变更处理） | 无独立预览；仅远程同名分支已存在时追问 |
 | pr_merge 创建 | 目标分支 + 补充说明 | 正文预览 → 确认创建 / 修改内容 / 取消；创建后追问是否继续合并 |
 | pr_merge 合并 | 选择 PR（已输入/创建衔接场景已定，仅确认合并策略）+ 合并策略 | 正文 PR 概要 → 确认合并 / 取消 |
-| worktree 创建 | 功能描述 slug + type 前缀 + 分支名 + 目录名 + 起点（分两轮：轮 1 功能描述 → slug，轮 2 其余四项） | 无独立预览；目录已存在 / 分支冲突时追问 |
-| worktree 检出 | 分支选择 + 目录名（一轮 ≤2 问：目录名由分支名去 type 前缀自动推导，可改） | 无独立预览；目录已存在 / 分支已被其他 worktree 检出时中止 |
+| worktree 创建 | 功能描述 slug（一轮 1 问；slug 确认后 type 前缀、分支名、目录名、起点按规则自动推导，正文展示后直接执行） | 无独立预览；目录已存在 / 分支冲突时追问 |
+| worktree 检出 | 分支选择（一轮 1 问；目录名由分支名去 type 前缀自动推导，正文展示后直接执行） | 无独立预览；目录已存在 / 分支已被其他 worktree 检出时中止 |
 | worktree 清理 | 多选清理目标（无效项置顶附原因） | 正文清理范围（含将删除的本地分支）与原因 → 确认清理 / 取消 |
 | worktree 查看 | 无参数（只读） | 无（点击后直接展示列表） |
 
@@ -98,7 +99,7 @@ skills: skill-git-commit, skill-cmd-echo
 
 ### 1. 参数确认铁律（必须执行）
 
-完整规则见「零记忆交互契约」。任何子命令的任何参数，未经 `AskUserQuestion` 确认，不得执行对应操作。
+完整规则见「零记忆交互契约」。任何子命令的任何参数，未经 `AskUserQuestion` 确认，不得执行对应操作；唯一例外：由已确认参数按固定规则机械推导的参数，正文展示推导结果后直接执行，不再询问。
 
 ### 2. PR 标题规范（唯一来源）
 
@@ -465,11 +466,11 @@ git rev-parse --show-toplevel
 ```
 
 ```bash
-git worktree list
+gh repo view --json defaultBranchRef --jq .defaultBranchRef.name
 ```
 
 ```bash
-git branch -r
+git worktree list
 ```
 
 ```bash
@@ -478,25 +479,39 @@ git log --oneline -5
 
 - `git fetch origin` 保证远程引用新鲜——新分支起点不受本地落后影响（与 branch 步骤 1 对齐）
 - `git rev-parse --show-toplevel` → 记仓库根为 `<仓库根>`；worktree 落点记为 `<worktree 路径>` = `<仓库根>/../<目录名>`（绝对路径，不受当前 cwd 影响；cwd 停在仓库根或子目录结果一致）
-- 现有 worktree → 冲突检查依据；近期远程分支 → 起点候选
+- 默认分支名 → 起点自动推导依据（步骤 3）
+- 现有 worktree → 冲突检查依据
 - 最近提交主题 → 衍生 slug 候选（英文单词序列，去除 type 前缀）
 
-##### 步骤 2：轮 1 参数确认（功能描述 → slug）
+##### 步骤 2：参数确认（功能描述 → slug，一次 `AskUserQuestion` 1 问）
 
-slug 规范：英文单词小写、`_` 分隔、≤20 字符（如 `github_worktree_cmd`）。
+slug 规范：英文单词小写、`_` 分隔、≤30 字符（如 `github_worktree_cmd`）。
 
 | 问题 | 选项构成 |
 |---|---|
 | 功能描述 / slug | 已输入参数经校验（转换后为合法 slug）标注「已输入」置首；未输入则提交主题衍生 slug 候选置首；`Other` 输入中文或英文功能描述，由我翻译生成 slug |
 
-##### 步骤 3：轮 2 参数确认（一次 `AskUserQuestion` ≤4 问）
+##### 步骤 3：自动推导（无需确认）
 
-| 问题 | 选项构成 |
+slug 确认后，其余参数全部按固定规则自动推导，不再询问：
+
+| 参数 | 推导规则 |
 |---|---|
-| ① type 前缀 | 按 skill-git-commit 类型判断规则从功能描述判定（feat / fix / chore…），判定项标注「(推荐)」置首；`Other` |
-| ② 分支名 | `<type>_<slug>`（推荐）置首；`Other` 自由输入 |
-| ③ 目录名 | `<仓库名>_<slug>`（推荐）置首，注明位于主仓库父目录（与仓库同级）；`Other` 自由输入 |
-| ④ 起点 base | `origin/<默认分支>(推荐)` 置首 + 近期远程分支候选；`Other` 自由输入 |
+| type 前缀 | 按 skill-git-commit 类型判断规则从功能描述判定（feat / fix / chore…） |
+| 分支名 | `<type>_<slug>` |
+| 目录名 | `<仓库名>_<slug>`（位于主仓库父目录，与仓库同级） |
+| 起点 base | `origin/<默认分支>`（步骤 1 已收集，恒为远程默认分支，不做候选询问） |
+
+推导结果以正文展示后直接进入步骤 4（冲突检查）：
+
+```
+参数已自动推导：
+
+type 前缀：<type>（按功能描述判定）
+分支名：<type>_<slug>
+目录名：<仓库名>_<slug>（位于主仓库父目录）
+起点：origin/<默认分支>
+```
 
 ##### 步骤 4：冲突检查
 
@@ -504,7 +519,7 @@ slug 规范：英文单词小写、`_` 分隔、≤20 字符（如 `github_workt
 ls -d <worktree 路径>
 ```
 
-- 输出非空（目录已存在）→ 中止，提示清理旧目录或经 `Other` 更名后重试
+- 输出非空（目录已存在）→ 中止，提示清理旧目录，或换 slug 重新发起
 
 ```bash
 git branch -r --list origin/<分支名>
@@ -591,14 +606,13 @@ git for-each-ref refs/remotes/origin --sort=-committerdate --format=%(refname:sh
 - `git rev-parse --show-toplevel` → 记仓库根为 `<仓库根>`；worktree 落点记为 `<worktree 路径>` = `<仓库根>/../<目录名>`（绝对路径，不受当前 cwd 影响）
 - 近期远程分支 → 分支选择候选
 
-##### 步骤 2：参数确认（一次 `AskUserQuestion` ≤2 问）
+##### 步骤 2：参数确认（一次 `AskUserQuestion` 1 问）
 
 | 问题 | 选项构成 |
 |---|---|
 | ① 分支 | 已输入参数命中远程分支标注「已输入」置首（推荐）；近期远程分支候选置后；`Other` 自由输入 |
-| ② 目录名 | `<仓库名>_<分支名去 type 前缀>`（推荐）置首，注明位于主仓库父目录（与仓库同级）；`Other` 自由输入 |
 
-目录名推导规则：按 skill-git-commit 类型判断规则识别并去除 type 前缀（如 `feat_acp_ironpark_adapter` → `acp_ironpark_adapter`）；无 type 前缀用分支全名。已输入参数未命中远程分支 → 正文提示后当作未输入，视为功能描述回落创建流程。
+目录名自动推导（无需确认）：按 skill-git-commit 类型判断规则识别并去除 type 前缀（如 `feat_acp_ironpark_adapter` → `acp_ironpark_adapter`）；无 type 前缀用分支全名。分支选定后正文展示推导的目录名（`<仓库名>_<分支名去 type 前缀>`，位于主仓库父目录），直接进入步骤 3（冲突检查）。已输入参数未命中远程分支 → 正文提示后当作未输入，视为功能描述回落创建流程。
 
 ##### 步骤 3：冲突检查
 
@@ -606,7 +620,7 @@ git for-each-ref refs/remotes/origin --sort=-committerdate --format=%(refname:sh
 ls -d <worktree 路径>
 ```
 
-- 输出非空（目录已存在）→ 中止，提示清理旧目录或经 `Other` 更名后重试
+- 输出非空（目录已存在）→ 中止，提示清理旧目录，或换分支重新发起
 
 ```bash
 git branch --list <分支名>
@@ -774,10 +788,10 @@ git branch -D <分支名>
 | PR 为草稿（pr_merge 合并） | 概要正文警示，提示先执行 `gh pr ready` |
 | 存在合并冲突（pr_merge 合并） | 中止，提示先解决冲突 |
 | push / pr create / pr merge 执行失败 | 展示命令错误输出，中止流程 |
-| 目标目录已存在（worktree 创建） | 中止，提示清理旧目录或更名后重试 |
+| 目标目录已存在（worktree 创建） | 中止，提示清理旧目录或换 slug 重新发起 |
 | 本地分支已被其他 worktree 检出（worktree 创建） | 中止，提示先处理对应 worktree |
 | worktree add 执行失败（worktree 创建） | 展示命令错误输出，中止流程 |
-| 目标目录已存在（worktree 检出） | 中止，提示清理旧目录或更名后重试 |
+| 目标目录已存在（worktree 检出） | 中止，提示清理旧目录或换分支重新发起 |
 | 本地分支已被其他 worktree 检出（worktree 检出） | 中止，提示先处理对应 worktree |
 | worktree add 执行失败（worktree 检出） | 展示命令错误输出，中止流程 |
 | 在链接 worktree 内执行清理（worktree 清理） | 中止，提示 `cd <主仓库路径>` 后重试 |
