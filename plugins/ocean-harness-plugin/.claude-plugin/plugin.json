@@ -1,5 +1,5 @@
 {
   "name": "ocean-harness",
   "description": "基于 ocean-harness 客户端应用自带 CLI 封装的插件",
-  "version": "0.3.0"
+  "version": "0.3.1"
 }
