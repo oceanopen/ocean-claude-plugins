@@ -1,5 +1,5 @@
 ---
-allowed-tools: AskUserQuestion, Bash(git add:*), Bash(git status:*), Bash(git diff:*), Bash(git commit:*), Bash(git push:*), Bash(git log:*), Bash(git branch:*), Bash(git remote:*), Bash(git fetch:*), Bash(git pull:*), Bash(git stash:*), Bash(git rebase:*), Read, Glob, Grep, Skill
+allowed-tools: AskUserQuestion, Bash(git:*), Read, Glob, Grep, Skill
 argument-hint: [message]
 description: 智能 Git 提交，自动分析变更生成规范 commit message 并执行提交
 skills: skill-git-commit, skill-git-sync, skill-cmd-echo

@@ -1,5 +1,5 @@
 ---
-allowed-tools: AskUserQuestion, Bash(git status:*), Bash(git log:*), Bash(git diff:*), Bash(git fetch:*), Bash(git branch:*), Bash(git checkout:*), Bash(git check-ref-format:*), Bash(git push:*), Bash(git pull:*), Bash(git remote:*), Bash(git rev-parse:*), Bash(git worktree:*), Bash(git ls-remote:*), Bash(git for-each-ref:*), Bash(ls:*), Bash(cd:*), Bash(gh:*), Read, Glob, Grep, Skill
+allowed-tools: AskUserQuestion, Bash(git:*), Read, Glob, Grep, Skill
 argument-hint: [branch <name> [base] | pr_merge [补充说明|PR链接] | worktree [功能描述|远程分支名]]
 description: 零记忆 GitHub 工作流：交互引导创建远程分支并本地跟踪检出、PR 创建与合并按当前分支自动路由（非默认分支直发 / 默认分支选远程分支）、创建/检出/查看和清理 worktree（含本地分支），参数经选项确认或按规则自动推导
 skills: skill-git-commit, skill-cmd-echo
