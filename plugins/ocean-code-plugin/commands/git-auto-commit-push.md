@@ -2,22 +2,22 @@
 allowed-tools: AskUserQuestion, Bash(git:*), Read, Glob, Grep, Skill
 argument-hint: [message]
 description: 全自动 Git 提交并推送，校验通过自动执行 commit + push，校验不通过时人工确认
-skills: skill-git-commit, skill-git-sync, skill-cmd-echo
+skills: ocean-code:skill-git-commit, ocean-code:skill-git-sync, ocean-code:skill-cmd-echo
 ---
 
-你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 **skill-git-commit** 技能定义的规范，分析当前分支全部变更并生成 commit message，**校验通过后自动执行 commit 和 push，无需人工确认**；校验不通过时，通过 `AskUserQuestion` 询问用户是否继续。提交前依据 **skill-git-sync** 技能契约自动同步远程分支，落后则自动对齐，避免提交后 push 才发现本地落后于远程。
+你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 `ocean-code:skill-git-commit` 技能定义的规范，分析当前分支全部变更并生成 commit message，**校验通过后自动执行 commit 和 push，无需人工确认**；校验不通过时，通过 `AskUserQuestion` 询问用户是否继续。提交前依据 `ocean-code:skill-git-sync` 技能契约自动同步远程分支，落后则自动对齐，避免提交后 push 才发现本地落后于远程。
 
 # /ocean-code:git-auto-commit-push
 
-全自动 Git 提交并推送。依据 **skill-git-commit** 技能的提交信息规范，对当前分支全部变更进行分析，生成规范 commit message，校验通过后自动执行 commit + push，全程无需人工确认。校验不通过时，通过 `AskUserQuestion` 询问用户（继续 / 取消）。提交前先依据 **skill-git-sync** 技能契约自动同步远程分支，落后则自动对齐，仅冲突时才人工确认。
+全自动 Git 提交并推送。依据 `ocean-code:skill-git-commit` 技能的提交信息规范，对当前分支全部变更进行分析，生成规范 commit message，校验通过后自动执行 commit + push，全程无需人工确认。校验不通过时，通过 `AskUserQuestion` 询问用户（继续 / 取消）。提交前先依据 `ocean-code:skill-git-sync` 技能契约自动同步远程分支，落后则自动对齐，仅冲突时才人工确认。
 
 > 💡 **如需人工确认 commit 和 push，请使用 `/ocean-code:git-commit`。**
 
 ## 核心功能
 
-1. **提交前同步**：依据 skill-git-sync 契约自动同步远程分支，落后则自动对齐，仅冲突时才询问
+1. **提交前同步**：依据 `ocean-code:skill-git-sync` 契约自动同步远程分支，落后则自动对齐，仅冲突时才询问
 2. **全量变更分析**：获取当前分支的全部 git diff 内容（staged 与 unstaged）
-3. **智能生成 message**：依据 skill-git-commit 技能规范生成精炼准确的 commit message
+3. **智能生成 message**：依据 `ocean-code:skill-git-commit` 技能规范生成精炼准确的 commit message
 4. **自动校验**：commit 前和 push 前自动校验，校验通过则自动执行，校验不通过则人工确认
 5. **自动暂存**：校验通过后自动暂存当前分支全部改动
 6. **自动提交**：校验通过后自动执行 git commit
@@ -51,11 +51,15 @@ skills: skill-git-commit, skill-git-sync, skill-cmd-echo
 
 ### 1. Commit Message 规范（唯一来源）
 
-格式（单行/多行模式）、类型判断（含多类型优先级）与总结质量要求，一律以 **skill-git-commit** 技能为唯一规范来源，本命令不另建副本。步骤 6 生成 message 前依据该技能的完整规范执行。
+格式（单行/多行模式）、类型判断（含多类型优先级）与总结质量要求，一律以 `ocean-code:skill-git-commit` 技能为唯一规范来源，本命令不另建副本。步骤 6 生成 message 前依据该技能的完整规范执行。
 
 ### 2. 命令透明化（必须执行）
 
-每次调用 Bash 工具前，必须先在正文中单独一行回显原始命令，完整规则见 **skill-cmd-echo** 技能。
+每次调用 Bash 工具前，必须先在正文中单独一行回显原始命令，完整规则见 `ocean-code:skill-cmd-echo` 技能。
+
+### 3. 工具加载兼容性（ToolSearch）
+
+交互类工具（如 `AskUserQuestion`）可能未在本会话预加载，调用前先经 `ToolSearch` 加载。`|` 交替（如 `TaskCreate|AskUserQuestion`）与宽泛关键词检索都可能假阴性，**检索无结果不得判定工具不存在**；一律用 `select:` 精确语法（如 `select:AskUserQuestion`）检索加载，多名字合并检索可能静默漏返，关键工具用单名 `select:工具名` 复核。工具是否可用以**调用结果**为最终判据，确认不可用才降级为正文选项提问并说明原因（⚠️ 教训：曾因 `TaskCreate|AskUserQuestion` 假阴性误判「本环境没有该工具」，`select:` 精确语法实际可命中）。
 
 ## 实施步骤
 
@@ -103,7 +107,7 @@ git config user.email
 
 ### 步骤 3：同步远程分支
 
-依据 **skill-git-sync** 技能定义的契约，在提交前自动同步远程分支（保持全自动语义：落后自动同步，仅冲突才询问）：
+依据 `ocean-code:skill-git-sync` 技能定义的契约，在提交前自动同步远程分支（保持全自动语义：落后自动同步，仅冲突才询问）：
 
 ```bash
 git fetch
@@ -112,11 +116,11 @@ git branch -vv
 
 - 本地不落后 → 同步通过，自动继续步骤 4，无需人工确认
 - 本地落后 → 自动同步：工作区干净执行 `git pull --rebase`；有未提交变更执行 `git stash push -u` → `git pull --rebase` → `git stash pop`
-- 出现冲突 → 按 skill-git-sync 统一入口处理：`AskUserQuestion`（自动处理（推荐）/ 人工处理 / 中止命令），冲突解决后不中止流程
+- 出现冲突 → 按 `ocean-code:skill-git-sync` 统一入口处理：`AskUserQuestion`（自动处理（推荐）/ 人工处理 / 中止命令），冲突解决后不中止流程
 - **冲突解决后 → 自动继续步骤 4，无需人工确认（与全自动语义一致）**
 - **仅用户在冲突处理中选择「中止命令」时停止提交流程**
 
-完整流程、冲突处理与禁止操作见 **skill-git-sync** 技能。
+完整流程、冲突处理与禁止操作见 `ocean-code:skill-git-sync` 技能。
 
 ### 步骤 4：敏感文件检查
 
@@ -145,7 +149,7 @@ git diff HEAD
 
 ### 步骤 6：分析变更并生成 Commit Message
 
-依据 **skill-git-commit** 技能定义的规范（格式、类型、总结要求），分析变更内容生成 commit message。
+依据 `ocean-code:skill-git-commit` 技能定义的规范（格式、类型、总结要求），分析变更内容生成 commit message。
 
 用户提供了 `$ARGUMENTS` 时，将其作为参考，但仍然基于 diff 进行完整分析。
 
@@ -159,7 +163,7 @@ git diff HEAD
 |--------|---------|-----------|
 | 工作区状态 | 有变更 | 步骤 1 已处理 |
 | Git 用户信息 | 已配置 | 步骤 2 已处理 |
-| 远程同步 | 已对齐远程 | 步骤 3 已处理（skill-git-sync） |
+| 远程同步 | 已对齐远程 | 步骤 3 已处理（`ocean-code:skill-git-sync`） |
 | 敏感文件 | 无敏感文件 | 步骤 4 已处理 |
 | 超大提交 | 变更文件 ≤ 50 | 通过 `AskUserQuestion` 询问（继续/取消） |
 | 合并冲突 | 无冲突文件 | 通过 `AskUserQuestion` 询问（继续/取消） |
@@ -277,7 +281,7 @@ git push
 |------|------|
 | 无变更 | 提示用户先修改文件，流程终止 |
 | 未配置 Git 用户信息 | 校验不通过，AskUserQuestion（继续/取消） |
-| 远程领先 | 提交前自动同步（skill-git-sync），仅冲突时 AskUserQuestion（自动处理/人工处理/中止），解决后自动继续 |
+| 远程领先 | 提交前自动同步（`ocean-code:skill-git-sync`），仅冲突时 AskUserQuestion（自动处理/人工处理/中止），解决后自动继续 |
 | 同步被用户中止 | 停止提交流程 |
 | 含敏感文件 | 校验不通过，AskUserQuestion（继续/取消） |
 | 合并冲突 | 校验不通过，AskUserQuestion（继续/取消） |

@@ -2,20 +2,20 @@
 allowed-tools: AskUserQuestion, Bash(git:*), Read, Glob, Grep, Skill
 argument-hint: [message]
 description: 智能 Git 提交，自动分析变更生成规范 commit message 并执行提交
-skills: skill-git-commit, skill-git-sync, skill-cmd-echo
+skills: ocean-code:skill-git-commit, ocean-code:skill-git-sync, ocean-code:skill-cmd-echo
 ---
 
-你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 **skill-git-commit** 技能定义的规范，分析当前分支全部变更并生成 commit message，然后展示预览供用户确认，确认后再执行提交，提交后询问是否推送。提交前依据 **skill-git-sync** 技能契约同步远程分支，避免提交后 push 才发现本地落后于远程。
+你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 `ocean-code:skill-git-commit` 技能定义的规范，分析当前分支全部变更并生成 commit message，然后展示预览供用户确认，确认后再执行提交，提交后询问是否推送。提交前依据 `ocean-code:skill-git-sync` 技能契约同步远程分支，避免提交后 push 才发现本地落后于远程。
 
 # /ocean-code:git-commit
 
-依据 **skill-git-commit** 技能的提交信息规范，对当前分支全部变更进行分析，生成规范 commit message，展示预览供用户确认后再提交，提交后询问是否推送。提交前先依据 **skill-git-sync** 技能契约同步远程分支，落后则自动对齐。
+依据 `ocean-code:skill-git-commit` 技能的提交信息规范，对当前分支全部变更进行分析，生成规范 commit message，展示预览供用户确认后再提交，提交后询问是否推送。提交前先依据 `ocean-code:skill-git-sync` 技能契约同步远程分支，落后则自动对齐。
 
 ## 核心功能
 
-1. **提交前同步**：依据 skill-git-sync 契约检测并同步远程分支，落后则先对齐再提交
+1. **提交前同步**：依据 `ocean-code:skill-git-sync` 契约检测并同步远程分支，落后则先对齐再提交
 2. **全量变更分析**：获取当前分支的全部 git diff 内容（staged 与 unstaged）
-3. **智能生成 message**：依据 skill-git-commit 技能规范生成精炼准确的 commit message
+3. **智能生成 message**：依据 `ocean-code:skill-git-commit` 技能规范生成精炼准确的 commit message
 4. **预览确认**：先以正文形式展示变更总结、commit message、变更文件列表，再用 `AskUserQuestion` 询问是否提交
 5. **自动暂存**：用户确认后暂存当前分支全部改动
 6. **执行提交**：用户确认后执行 git commit
@@ -44,7 +44,7 @@ skills: skill-git-commit, skill-git-sync, skill-cmd-echo
 
 ### 1. Commit Message 规范（唯一来源）
 
-格式（单行/多行模式）、类型判断（含多类型优先级）与总结质量要求，一律以 **skill-git-commit** 技能为唯一规范来源，本命令不另建副本。步骤 6 生成 message 前依据该技能的完整规范执行。
+格式（单行/多行模式）、类型判断（含多类型优先级）与总结质量要求，一律以 `ocean-code:skill-git-commit` 技能为唯一规范来源，本命令不另建副本。步骤 6 生成 message 前依据该技能的完整规范执行。
 
 ### 2. 预览展示方式（必须执行）
 
@@ -61,7 +61,11 @@ skills: skill-git-commit, skill-git-sync, skill-cmd-echo
 
 ### 3. 命令透明化（必须执行）
 
-每次调用 Bash 工具前，必须先在正文中单独一行回显原始命令，完整规则见 **skill-cmd-echo** 技能。
+每次调用 Bash 工具前，必须先在正文中单独一行回显原始命令，完整规则见 `ocean-code:skill-cmd-echo` 技能。
+
+### 4. 工具加载兼容性（ToolSearch）
+
+交互类工具（如 `AskUserQuestion`）可能未在本会话预加载，调用前先经 `ToolSearch` 加载。`|` 交替（如 `TaskCreate|AskUserQuestion`）与宽泛关键词检索都可能假阴性，**检索无结果不得判定工具不存在**；一律用 `select:` 精确语法（如 `select:AskUserQuestion`）检索加载，多名字合并检索可能静默漏返，关键工具用单名 `select:工具名` 复核。工具是否可用以**调用结果**为最终判据，确认不可用才降级为正文选项提问并说明原因（⚠️ 教训：曾因 `TaskCreate|AskUserQuestion` 假阴性误判「本环境没有该工具」，`select:` 精确语法实际可命中）。
 
 ## 实施步骤
 
@@ -105,7 +109,7 @@ git config user.email
 
 ### 步骤 3：同步远程分支
 
-依据 **skill-git-sync** 技能定义的契约，在提交前同步远程分支：
+依据 `ocean-code:skill-git-sync` 技能定义的契约，在提交前同步远程分支：
 
 ```bash
 git fetch
@@ -114,11 +118,11 @@ git branch -vv
 
 - 本地不落后 → 同步通过，直接进入步骤 4
 - 本地落后 → 自动同步：工作区干净执行 `git pull --rebase`；有未提交变更执行 `git stash push -u` → `git pull --rebase` → `git stash pop`
-- 出现冲突 → 按 skill-git-sync 统一入口处理：`AskUserQuestion`（自动处理（推荐）/ 人工处理 / 中止命令），冲突解决后不中止流程
+- 出现冲突 → 按 `ocean-code:skill-git-sync` 统一入口处理：`AskUserQuestion`（自动处理（推荐）/ 人工处理 / 中止命令），冲突解决后不中止流程
 - **冲突解决后 → 通过 `AskUserQuestion` 询问用户是否继续提交流程（继续提交 / 中止提交）**
 - **仅用户在冲突处理中选择「中止命令」时停止提交流程**
 
-完整流程、冲突处理与禁止操作见 **skill-git-sync** 技能。
+完整流程、冲突处理与禁止操作见 `ocean-code:skill-git-sync` 技能。
 
 ### 步骤 4：敏感文件检查
 
@@ -134,7 +138,7 @@ git diff HEAD
 
 ### 步骤 6：分析变更并生成 Commit Message
 
-依据 **skill-git-commit** 技能定义的规范（格式、类型、总结要求），分析变更内容生成 commit message。
+依据 `ocean-code:skill-git-commit` 技能定义的规范（格式、类型、总结要求），分析变更内容生成 commit message。
 
 用户提供了 `$ARGUMENTS` 时，将其作为参考，但仍然基于 diff 进行完整分析。
 
@@ -219,7 +223,7 @@ git commit -m "<type>(<scope>): <subject>" -m "<body>"
 | 场景 | 处理 |
 |------|------|
 | 无变更 | 提示用户先修改文件 |
-| 远程领先 | 提交前自动同步（skill-git-sync），冲突解决后询问是否继续提交流程，用户中止则停止流程 |
+| 远程领先 | 提交前自动同步（`ocean-code:skill-git-sync`），冲突解决后询问是否继续提交流程，用户中止则停止流程 |
 | 含敏感文件 | 停止提交并警告 |
 | 合并冲突 | 暂停流程，提示先解决冲突 |
 | Hook 失败 | 显示错误信息，修复后创建新提交（不 amend） |

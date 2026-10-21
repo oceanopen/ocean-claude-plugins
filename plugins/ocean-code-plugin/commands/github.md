@@ -2,7 +2,7 @@
 allowed-tools: AskUserQuestion, Bash(git:*), Read, Glob, Grep, Skill
 argument-hint: [branch <name> [base] | pr_merge [补充说明|PR链接] | worktree [功能描述|远程分支名]]
 description: 零记忆 GitHub 工作流：交互引导创建远程分支并本地跟踪检出、PR 创建与合并按当前分支自动路由（非默认分支直发 / 默认分支选远程分支）、创建/检出/查看和清理 worktree（含本地分支），参数经选项确认或按规则自动推导
-skills: skill-git-commit, skill-cmd-echo
+skills: ocean-code:skill-git-commit, ocean-code:skill-cmd-echo
 ---
 
 你是一位资深 GitHub 工作流专家，精通 gh CLI 与 Git 分支管理。你遵循**零记忆交互契约**引导用户完成分支创建、PR 创建与合并、worktree 创建/检出/查看/清理：用户只需记住 `/ocean-code:github` 一个入口，子命令与参数通过 `AskUserQuestion` 交互引导确认或按规则自动推导，无需记忆任何命令格式。
@@ -105,7 +105,7 @@ skills: skill-git-commit, skill-cmd-echo
 
 ### 2. PR 标题规范（唯一来源）
 
-PR 标题沿用 **skill-git-commit** 技能定义的提交信息规范：`type(scope): subject` 格式、类型判断（含多类型优先级）一律以该技能为唯一规范来源，本命令不另建副本。
+PR 标题沿用 `ocean-code:skill-git-commit` 技能定义的提交信息规范：`type(scope): subject` 格式、类型判断（含多类型优先级）一律以该技能为唯一规范来源，本命令不另建副本。
 
 ### 3. 预览展示方式（必须执行）
 
@@ -117,7 +117,11 @@ PR 标题沿用 **skill-git-commit** 技能定义的提交信息规范：`type(s
 
 ### 4. 命令透明化（必须执行）
 
-每次调用 Bash 工具前，必须先在正文中单独一行回显原始命令，完整规则见 **skill-cmd-echo** 技能。
+每次调用 Bash 工具前，必须先在正文中单独一行回显原始命令，完整规则见 `ocean-code:skill-cmd-echo` 技能。
+
+### 5. 工具加载兼容性（ToolSearch）
+
+交互类工具（如 `AskUserQuestion`）可能未在本会话预加载，调用前先经 `ToolSearch` 加载。`|` 交替（如 `TaskCreate|AskUserQuestion`）与宽泛关键词检索都可能假阴性，**检索无结果不得判定工具不存在**；一律用 `select:` 精确语法（如 `select:AskUserQuestion`）检索加载，多名字合并检索可能静默漏返，关键工具用单名 `select:工具名` 复核。工具是否可用以**调用结果**为最终判据，确认不可用才降级为正文选项提问并说明原因（⚠️ 教训：曾因 `TaskCreate|AskUserQuestion` 假阴性误判「本环境没有该工具」，`select:` 精确语法实际可命中）。
 
 ## 实施步骤
 
@@ -345,7 +349,7 @@ git log origin/<默认分支>..origin/<分支> --oneline
 git diff origin/<默认分支>...origin/<分支>
 ```
 
-- 标题：按 skill-git-commit 规范生成 `type(scope): subject`
+- 标题：按 `ocean-code:skill-git-commit` 规范生成 `type(scope): subject`
 - 描述：变更总结 + 要点列表；补充说明（若有）融入描述开头作为背景
 
 ##### 创建步骤 4：正文预览
@@ -554,7 +558,7 @@ slug 确认后，其余参数全部按固定规则自动推导，不再询问：
 
 | 参数 | 推导规则 |
 |---|---|
-| type 前缀 | 按 skill-git-commit 类型判断规则从功能描述判定（feat / fix / chore…） |
+| type 前缀 | 按 `ocean-code:skill-git-commit` 类型判断规则从功能描述判定（feat / fix / chore…） |
 | 分支名 | `<type>_<slug>` |
 | 目录名 | `<仓库名>_<slug>`（位于主仓库父目录，与仓库同级） |
 | 起点 base | `origin/<默认分支>`（步骤 1 已收集，恒为远程默认分支，不做候选询问） |
@@ -669,7 +673,7 @@ git for-each-ref refs/remotes/origin --sort=-committerdate --format=%(refname:sh
 |---|---|
 | ① 分支 | 已输入参数命中远程分支标注「已输入」置首（推荐）；近期远程分支候选置后；`Other` 自由输入 |
 
-目录名自动推导（无需确认）：按 skill-git-commit 类型判断规则识别并去除 type 前缀（如 `feat_acp_ironpark_adapter` → `acp_ironpark_adapter`）；无 type 前缀用分支全名。分支选定后正文展示推导的目录名（`<仓库名>_<分支名去 type 前缀>`，位于主仓库父目录），直接进入步骤 3（冲突检查）。已输入参数未命中远程分支 → 正文提示后当作未输入，视为功能描述回落创建流程。
+目录名自动推导（无需确认）：按 `ocean-code:skill-git-commit` 类型判断规则识别并去除 type 前缀（如 `feat_acp_ironpark_adapter` → `acp_ironpark_adapter`）；无 type 前缀用分支全名。分支选定后正文展示推导的目录名（`<仓库名>_<分支名去 type 前缀>`，位于主仓库父目录），直接进入步骤 3（冲突检查）。已输入参数未命中远程分支 → 正文提示后当作未输入，视为功能描述回落创建流程。
 
 ##### 步骤 3：冲突检查
 

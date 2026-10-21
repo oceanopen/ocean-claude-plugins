@@ -9,7 +9,7 @@ description: 浏览器页面自动化编排：页面抓取、登录态获取（�
 
 ## 调用契约
 
-所有 browser_* 工具一律经 ocean-harness CLI 调用（`<CLI 命令名> mcp call <工具名> --data '<入参 JSON>'`），**遵守 skill-cli-usage 技能的全部契约**——命令名探测、透明执行铁律（每条调用的命令行与输出必须逐条回显）、退出码与输出解析规则。不直接调用 MCP，不再复述其内容。
+所有 browser_* 工具一律经 ocean-harness CLI 调用（`<CLI 命令名> mcp call <工具名> --data '<入参 JSON>'`），**遵守 `skill-cli-usage` 技能的全部契约**——命令名探测、透明执行铁律（每条调用的命令行与输出必须逐条回显）、退出码与输出解析规则。不直接调用 MCP，不再复述其内容。
 
 工具清单与入参 schema 随时自查：`mcp tools` / `mcp schema <工具名>`。**不要凭记忆背参数**——schema 以运行时查询为准。
 
