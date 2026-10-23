@@ -1,7 +1,7 @@
 ---
 name: code-explorer
 description: 深度分析代码库，追踪执行路径、映射架构层次、理解设计模式与抽象层、记录依赖关系，为新功能开发提供全面的代码理解
-tools: Glob, Grep, Read, WebFetch, WebSearch
+tools: Read, WebFetch, WebSearch
 model: sonnet
 color: yellow
 ---

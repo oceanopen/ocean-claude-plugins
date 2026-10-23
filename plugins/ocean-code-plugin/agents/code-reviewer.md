@@ -1,7 +1,7 @@
 ---
 name: code-reviewer
 description: 审查代码中的缺陷、逻辑错误、安全漏洞、质量问题及项目规范遵循情况，使用置信度过滤仅报告真正重要的高优先级问题
-tools: Glob, Grep, Read, WebFetch, WebSearch
+tools: Read, WebFetch, WebSearch
 model: sonnet
 color: red
 ---

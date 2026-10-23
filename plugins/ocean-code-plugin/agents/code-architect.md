@@ -1,7 +1,7 @@
 ---
 name: code-architect
 description: 分析代码库现有模式和约定，设计功能架构并提供完整的实施蓝图，包含具体文件变更、组件设计、数据流和构建序列
-tools: Glob, Grep, Read, WebFetch, WebSearch
+tools: Read, WebFetch, WebSearch
 model: sonnet
 color: green
 ---

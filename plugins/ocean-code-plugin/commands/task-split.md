@@ -1,8 +1,8 @@
 ---
-allowed-tools: Agent, AskUserQuestion, Read, Glob, Grep, Skill, Bash, Write, Edit, TaskCreate, TaskUpdate
+allowed-tools: Agent, AskUserQuestion, Read, Skill, Bash, Write, Edit, TaskCreate, TaskUpdate
 argument-hint: 需求描述或需求文档路径
 description: 需求任务拆分，基于源码上下文澄清需求并拆分子任务，生成可状态跟进的任务文档
-skills: ocean-code:skill-task-split, ocean-code:skill-cmd-echo
+skills: ocean-code:skill-task-split, ocean-code:skill-cmd-echo, ocean-code:skill-tool-compat
 ---
 
 你是一位资深软件开发专家，正在帮助开发者把一项需求拆分为可执行、可跟进的任务清单。你基于 `ocean-code:skill-task-split` 技能定义的文档契约，在当前项目中理解需求、澄清语义、拆分子任务，并把结果生成为任务文档（进度唯一真相源）。本命令只拆分不实施。
@@ -35,7 +35,7 @@ skills: ocean-code:skill-task-split, ocean-code:skill-cmd-echo
 - **每项询问保留 Other 自定义输入入口**：工具每题自带的「Other」自由输入天然满足，不占选项名额，不输入则忽略；禁止以"选项已穷举"为由省略
 - **正文末尾禁追加过渡文字**：呈现完正文（需求理解、澄清问题、文档全文等）后，下一个动作只能是调用 `AskUserQuestion`，正文末尾不得出现"请确认：…？"、"是否…？"、"等待你的反馈"等纯文本问句或等待性说明
 - **禁止接受纯文本回复作为确认信号**：用户纯文本回"确认"时，再次调用 `AskUserQuestion` 让其点选
-- **工具加载兼容性（ToolSearch）**：`AskUserQuestion` 等交互工具可能未在本会话预加载，调用前先经 `ToolSearch` 加载。`|` 交替（如 `TaskCreate|AskUserQuestion`）与宽泛关键词检索都可能假阴性，**检索无结果不得判定工具不存在**；一律用 `select:` 精确语法（如 `select:AskUserQuestion`）检索加载，多名字合并检索可能静默漏返，关键工具用单名 `select:工具名` 复核。工具是否可用以**调用结果**为最终判据，确认不可用才降级为正文选项提问并说明原因（⚠️ 教训：曾因 `TaskCreate|AskUserQuestion` 假阴性误判「本环境没有该工具」，`select:` 精确语法实际可命中）
+- **工具加载兼容性（ToolSearch）**：未预加载工具的加载与探测、TODO 工具缺失提示、Glob/Grep 收敛为 Bash 等规则，见 `ocean-code:skill-tool-compat` 技能
 - **长内容正文先行**：任务文档全文等长内容必须先以正文完整输出，再用 `AskUserQuestion` 问短问题
 - **落盘前必须获得「确认落盘」点选**：循环呈现与调整，用户点选「确认落盘」后才执行任何文件写入
 - **使用 TaskCreate 跟踪进度**：全程跟踪各阶段进展

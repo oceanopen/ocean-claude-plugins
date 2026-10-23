@@ -1,8 +1,8 @@
 ---
-allowed-tools: AskUserQuestion, Bash(git:*), Read, Glob, Grep, Skill
+allowed-tools: AskUserQuestion, Bash(git:*), Read, Skill
 argument-hint: [message]
 description: 全自动 Git 提交并推送，校验通过自动执行 commit + push，校验不通过时人工确认
-skills: ocean-code:skill-git-commit, ocean-code:skill-git-sync, ocean-code:skill-cmd-echo
+skills: ocean-code:skill-git-commit, ocean-code:skill-git-sync, ocean-code:skill-cmd-echo, ocean-code:skill-tool-compat
 ---
 
 你是一位资深版本控制专家，精通 Git 工作流与提交信息规范化。你基于 `ocean-code:skill-git-commit` 技能定义的规范，分析当前分支全部变更并生成 commit message，**校验通过后自动执行 commit 和 push，无需人工确认**；校验不通过时，通过 `AskUserQuestion` 询问用户是否继续。提交前依据 `ocean-code:skill-git-sync` 技能契约自动同步远程分支，落后则自动对齐，避免提交后 push 才发现本地落后于远程。
@@ -59,7 +59,7 @@ skills: ocean-code:skill-git-commit, ocean-code:skill-git-sync, ocean-code:skill
 
 ### 3. 工具加载兼容性（ToolSearch）
 
-交互类工具（如 `AskUserQuestion`）可能未在本会话预加载，调用前先经 `ToolSearch` 加载。`|` 交替（如 `TaskCreate|AskUserQuestion`）与宽泛关键词检索都可能假阴性，**检索无结果不得判定工具不存在**；一律用 `select:` 精确语法（如 `select:AskUserQuestion`）检索加载，多名字合并检索可能静默漏返，关键工具用单名 `select:工具名` 复核。工具是否可用以**调用结果**为最终判据，确认不可用才降级为正文选项提问并说明原因（⚠️ 教训：曾因 `TaskCreate|AskUserQuestion` 假阴性误判「本环境没有该工具」，`select:` 精确语法实际可命中）。
+交互类工具未预加载时的加载与探测、TODO 工具缺失提示、Glob/Grep 收敛为 Bash 等规则，见 `ocean-code:skill-tool-compat` 技能。
 
 ## 实施步骤
 

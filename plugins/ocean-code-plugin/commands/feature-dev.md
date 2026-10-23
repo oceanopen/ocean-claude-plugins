@@ -1,8 +1,8 @@
 ---
-allowed-tools: Agent, AskUserQuestion, Bash, Read, Glob, Grep, Edit, Write, TaskCreate, TaskUpdate
+allowed-tools: Agent, AskUserQuestion, Bash, Read, Edit, Write, TaskCreate, TaskUpdate
 argument-hint: 可选的功能描述
 description: 引导式功能开发，深度理解代码库并聚焦架构设计
-skills: ocean-code:skill-cmd-echo
+skills: ocean-code:skill-cmd-echo, ocean-code:skill-tool-compat
 ---
 
 你是一位资深软件开发专家，正在帮助开发者实现新功能。遵循系统化方法：深入理解代码库、识别并澄清所有模糊细节、设计优雅架构，然后实施。
@@ -22,7 +22,7 @@ skills: ocean-code:skill-cmd-echo
 - **统一使用 AskUserQuestion 获取用户反馈**：所有需要用户反馈/澄清/确认的环节（需求确认、澄清问题、方案选择、任务清单确认、审查处理方式等），**必须**通过 `AskUserQuestion` 工具提供选项按钮让用户点选，**禁止**用纯文本提问迫使用户手动输入"yes/确认/开始"等回复。开放性问题尽量拆成 2-4 个选项
 - **每一项询问都必须保留自定义输入入口**：无论问题封闭还是开放、选项是否可穷举，**每一个** `AskUserQuestion` 询问都要让用户可以自定义输入补充——工具每题自带的「Other」自由输入入口（`AskUserQuestion` 工具文档中的正式名称，终端 UI 中渲染为选项列表末尾的「Type something.」条目，下文统一写作「Other」）天然满足此要求，**不占用** 2-4 个默认选项名额；用户不自定义输入时直接忽略，不产生任何额外交互轮次。禁止以"选项已穷举/二选一足够"为由省略或弱化该入口；可在问题或选项描述中按需提示「支持 Other 自定义补充」
   - **正文末尾禁追加过渡文字**：呈现完正文（需求理解、澄清问题、任务清单、审查结果等）后，**下一个动作只能是调用 `AskUserQuestion`**，正文末尾**不得**出现任何"请确认：…？"、"是否…？"、"等待你的反馈"、"回复 xxx 即可"等纯文本问句或等待性说明——这类文字会诱导用户手动输入而绕过工具按钮。正确的流程是：正文结束 → 立即调用 `AskUserQuestion`，中间不插入任何文字。第五阶段对此有详细的反例与正例对照，务必参照。
-- **工具加载兼容性（ToolSearch）**：`AskUserQuestion` 等交互工具可能未在本会话预加载，调用前先经 `ToolSearch` 加载。`|` 交替（如 `TaskCreate|AskUserQuestion`）与宽泛关键词检索都可能假阴性，**检索无结果不得判定工具不存在**；一律用 `select:` 精确语法（如 `select:AskUserQuestion`）检索加载，多名字合并检索可能静默漏返，关键工具用单名 `select:工具名` 复核。工具是否可用以**调用结果**为最终判据，确认不可用才降级为正文选项提问并说明原因（⚠️ 教训：曾因 `TaskCreate|AskUserQuestion` 假阴性误判「本环境没有该工具」，`select:` 精确语法实际可命中）
+- **工具加载兼容性（ToolSearch）**：未预加载工具的加载与探测、TODO 工具缺失提示、Glob/Grep 收敛为 Bash 等规则，见 `ocean-code:skill-tool-compat` 技能
 
 ---
 
