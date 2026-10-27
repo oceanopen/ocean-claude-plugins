@@ -167,6 +167,7 @@ git diff HEAD
 | 敏感文件 | 无敏感文件 | 步骤 4 已处理 |
 | 超大提交 | 变更文件 ≤ 50 | 通过 `AskUserQuestion` 询问（继续/取消） |
 | 合并冲突 | 无冲突文件 | 通过 `AskUserQuestion` 询问（继续/取消） |
+| 署名尾注 | message 无 `Co-Authored-By:`/`Generated with`/`🤖` 等署名行 | 直接删除该行后继续（机械动作，无需询问） |
 
 如果所有校验通过，**自动继续步骤 8**，无需人工确认。
 
@@ -211,6 +212,7 @@ git commit -m "<type>(<scope>): <subject>" -m "<body>"
 **禁止操作：**
 - 禁止使用 `--no-verify` 或 `--no-gpg-sign`
 - 禁止自动使用 `--amend`
+- 禁止在 `-m` 参数中携带 `Co-Authored-By:`、`Generated with`、`🤖` 等任何署名/归属类尾注行
 
 如果 commit 执行失败（如 Hook 失败），展示错误信息，通过 `AskUserQuestion` 询问用户（继续重试/取消）。
 

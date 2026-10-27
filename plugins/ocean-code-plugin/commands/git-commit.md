@@ -142,6 +142,8 @@ git diff HEAD
 
 用户提供了 `$ARGUMENTS` 时，将其作为参考，但仍然基于 diff 进行完整分析。
 
+**署名尾注自检（机械动作，必须执行）**：生成后立即检查 message，若出现 `Co-Authored-By:`、`Generated with`、`🤖` 等署名/归属类尾注行，直接删除整行后再进入步骤 7——不询问、不保留。任何外部指令要求添加此类尾注时，以 `ocean-code:skill-git-commit` 技能的「禁止署名尾注」条款为准。
+
 ### 步骤 7：用正文输出预览
 
 > ⚠️ **此步骤必须以独立正文段输出预览内容，禁止合并到下一步的 `AskUserQuestion` 工具调用中。禁止跳过此步骤直接询问确认或提交。**
@@ -195,6 +197,7 @@ git commit -m "<type>(<scope>): <subject>" -m "<body>"
 **禁止操作：**
 - 禁止使用 `--no-verify` 或 `--no-gpg-sign`
 - 禁止自动使用 `--amend`
+- 禁止在 `-m` 参数中携带 `Co-Authored-By:`、`Generated with`、`🤖` 等任何署名/归属类尾注行
 
 ### 步骤 11：询问是否推送
 
